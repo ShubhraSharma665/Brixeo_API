@@ -1,7 +1,7 @@
-import firebaseAdmin from '../config/firebase';
+// import firebaseAdmin from '../config/firebase';
 import _RS from '../helpers/ResponseHelper';
 // import Notification from "../models/Notification";
-import User from '../models/User';
+import User from '../models/user.models';
 import { USER_TYPE } from '../constants/user-type.enum';
 // import NotificationUser from "../models/NotificationUser";
 
@@ -218,15 +218,15 @@ class Helper {
 					token: receiver.device_token,
 				};
 
-				firebaseAdmin
-					.messaging()
-					.send(message)
-					.then((response) => {
-						console.log('Notification sent successfully : ', response);
-					})
-					.catch((error) => {
-						return error;
-					});
+				// firebaseAdmin
+				// 	.messaging()
+				// 	.send(message)
+				// 	.then((response) => {
+				// 		console.log('Notification sent successfully : ', response);
+				// 	})
+				// 	.catch((error) => {
+				// 		return error;
+				// 	});
 			}
 
 			console.log('notifi sent successfully -----------------------');
@@ -266,13 +266,13 @@ class Helper {
 						token: receiver.device_token,
 					};
 
-					firebaseAdmin
-						.messaging()
-						.send(message)
-						.then((response) => {
-							console.log('Notification sent successfully : ', response);
-						})
-						.catch((err) => console.log(err, 'Firebase ERROR'));
+					// firebaseAdmin
+					// 	.messaging()
+					// 	.send(message)
+					// 	.then((response) => {
+					// 		console.log('Notification sent successfully : ', response);
+					// 	})
+					// 	.catch((err) => console.log(err, 'Firebase ERROR'));
 				}
 			}
 		} catch (error) {
@@ -304,15 +304,15 @@ class Helper {
 						token: receiver.device_token,
 					};
 
-					firebaseAdmin
-						.messaging()
-						.send(message)
-						.then((response) => {
-							console.log('Notification sent successfully : ', response);
-						})
-						.catch((error) => {
-							return error;
-						});
+					// firebaseAdmin
+					// 	.messaging()
+					// 	.send(message)
+					// 	.then((response) => {
+					// 		console.log('Notification sent successfully : ', response);
+					// 	})
+					// 	.catch((error) => {
+					// 		return error;
+					// 	});
 				}
 			});
 

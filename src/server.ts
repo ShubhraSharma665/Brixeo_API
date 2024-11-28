@@ -71,7 +71,7 @@ export class Server {
 			'/img',
 			express.static(path.resolve(process.cwd() + '/assest/images'))
 		);
-		app.use('./uploads', express.static(path.join(__dirname, 'uploads')));
+		this.app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 		this.app.use('/api', Routes);
 	}
 

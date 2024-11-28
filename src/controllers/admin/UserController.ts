@@ -74,14 +74,49 @@ export class UserController {
 
   static async updateProfile(req, res, next) {
     const startTime = new Date().getTime();
-
     try {
-      let usersList = await userModels.find({});
+      const {
+        firstName,
+        lastName,
+        emailId,
+        mobileNumber,
+        gender,
+        dob,
+        primaryAddress,
+        secondaryAddress,
+        rate,
+        aboutMe,
+        myServices,
+        preferredLocation,
+        categories,
+      } = req.body;
+      const { profileImage, document, projectImages } = req.files;
+      const { id } = req.user;
+      let user = await userModels.findOne({ _id: id });
+      user.firstName = firstName || user.firstName;
+      user.lastName = lastName || user.lastName;
+      user.emailId = emailId || user.emailId;
+      user.mobileNumber = mobileNumber || user.mobileNumber;
+      user.gender = gender || user.gender;
+      user.dob = dob || user.dob;
+      user.primaryAddress = primaryAddress || user.primaryAddress;
+      user.secondaryAddress = secondaryAddress || user.secondaryAddress;
+      user.rate = rate || user.rate;
+      user.aboutMe = aboutMe || user.aboutMe;
+      user.myServices = myServices || user.myServices;
+      user.preferredLocation =
+        JSON.parse(preferredLocation) || user.preferredLocation;
+      user.categories = JSON.parse(categories) || user.categories;
+      user.profileImage = profileImage[0].originalname || user.profileImage;
+      user.document = document || user.document;
+      user.projectImages =
+        projectImages.map((item) => item.originalname) || user.projectImages;
+      await user.save();
       return _RS.ok(
         res,
         "SUCCESS",
-        "Users found successfully!!",
-        usersList,
+        "Profile updated successfully!!",
+        {},
         startTime
       );
     } catch (err) {

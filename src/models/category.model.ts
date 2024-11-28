@@ -11,7 +11,7 @@ const Category = new Schema(
     },
     parentId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Category", 
+      ref: "categories", 
       default: null, 
     },
     
@@ -31,4 +31,4 @@ const Category = new Schema(
 
 mongoose.plugin(aggregatePaginate);
 
-export default model<any, AggregatePaginateModel<any>>("Category", Category);
+export default model<any, AggregatePaginateModel<any>>("categories", Category);

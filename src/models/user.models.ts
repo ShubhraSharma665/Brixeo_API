@@ -35,48 +35,44 @@ const User = new Schema(
     gender: {
       type: String,
       enum: ["Male", "Female"],
-	  default:null
+      default: null,
     },
     dob: {
       type: String,
-	  default:null
+      default: null,
     },
     primaryAddress: {
       type: String,
-	  default:null
+      default: null,
     },
     secondaryAddress: {
       type: String,
-	  default:null
+      default: null,
     },
     rate: {
       type: Number,
-	  default:null
+      default: 0,
     },
-	preferredLocation:{
-		type:Array,
-		default:null
-	  },
-	categories:{  // this here stands for service type
-		type:Array,
-		default:null
-	},
+    preferredLocation: {
+      type: Array,
+      default: null,
+    },
+    categories: {
+        type: [mongoose.Schema.Types.ObjectId],
+        ref: "categories", // Reference the Category model
+      },
     aboutMe: {
       type: String,
-	  default:null
+      default: null,
     },
-	myServices:{
-		type:String,
-		default:null
-	},
-	projectImages:{
-		type:Array,
-		default:null
-	},
-    countryCode: {
+    myServices: {
       type: String,
-      default: "+91",
+      default: null,
     },
+    // countryCode: {
+    //   type: String,
+    //   default: "+91",
+    // },
     location: {
       type: String,
       default: null,
@@ -93,13 +89,17 @@ const User = new Schema(
       type: String,
       default: "en",
     },
-    image: {
+    profileImage: {
       type: String,
       default: null,
     },
-    socialImage: {
+    document: {
       type: String,
       default: null,
+    },
+    projectImages: {
+      type: Array,
+      default: [],
     },
     isActive: {
       type: Boolean,

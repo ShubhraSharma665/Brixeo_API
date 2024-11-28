@@ -1,6 +1,7 @@
 import { Router } from "express";
 import Authentication from "../../middlewares/Authentication";
 import { UserController } from "../../controllers/admin/UserController";
+import { upload } from "../../middlewares/MulterMiddleware";
 
 class UserRouter {
   public router: Router;
@@ -15,9 +16,14 @@ class UserRouter {
   public delete() {}
 
   public post() {
-    this.router.get(
+    this.router.post(
       "/update-profile",
       Authentication.admin,
+      upload.fields([
+        { name: "projectImages", maxCount: 5 },
+        { name: "profileImage", maxCount: 1 },
+        { name: "uploadId", maxCount: 1 },
+      ]),
       UserController.updateProfile
     );
   }

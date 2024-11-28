@@ -14,7 +14,7 @@ export class CommanController {
     try {
       let isUserExist = await userModels.findOne({
         _id: id,
-      });
+      }).populate({path: "categories"})
 
       if (!isUserExist) {
         return _RS.notFound(
