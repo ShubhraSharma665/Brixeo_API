@@ -22,9 +22,19 @@ class UserRouter {
       upload.fields([
         { name: "projectImages", maxCount: 5 },
         { name: "profileImage", maxCount: 1 },
-        { name: "uploadId", maxCount: 1 },
+        { name: "document", maxCount: 1 },
       ]),
       UserController.updateProfile
+    );
+    this.router.post(
+      "/get-user",
+      Authentication.admin,
+      UserController.getProfile
+    );
+    this.router.post(
+      "/active/toggle",
+      Authentication.admin,
+      UserController.activeUnactive
     );
   }
 

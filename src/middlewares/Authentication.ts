@@ -116,7 +116,6 @@ class Authentication {
 				);
 			}
 			const decoded: any = await Auth.decodeJwt(token);
-
 			const currentUser = await User.findById(decoded.id).find({
 				type: { $in: [USER_TYPE.admin] },
 			});
@@ -130,7 +129,7 @@ class Authentication {
 					startTime
 				);
 			}
-
+			console.log("here it is ",decoded)
 			req.user = currentUser;
 			req.user.id = decoded.id;
 			req.user.type = decoded.type;

@@ -12,11 +12,15 @@ class CommonRoutes {
 	}
 
 	public post() {
-		
+		this.router.post('/profile', CommanController.profile);
+		this.router.post('/forgot-password', CommanController.forgotPassword);
+		this.router.post('/newsletter/add-email', CommanController.newsLetterAdd);		
 	}
 
 	public get() {
 		this.router.get('/profile', Authentication.admin, CommanController.profile);
+		this.router.get('/newsletter/get', CommanController.newsLetterGet);
+
 	}
 }
 

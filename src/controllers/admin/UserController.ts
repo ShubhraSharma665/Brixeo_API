@@ -57,14 +57,35 @@ export class UserController {
 
   static async getProfile(req, res, next) {
     const startTime = new Date().getTime();
+    const { id } = req.body
 
     try {
-      let usersList = await userModels.find({});
+      let usersList = await userModels.findOne({_id:id}).populate({path: "categories"});
       return _RS.ok(
         res,
         "SUCCESS",
-        "Users found successfully!!",
+        "User found successfully!!",
         usersList,
+        startTime
+      );
+    } catch (err) {
+      next(err);
+    }
+  }
+  
+  static async activeUnactive(req, res, next) {
+    const startTime = new Date().getTime();
+    const { id } = req.body
+
+    try {
+      let user = await userModels.findOne({_id:id})
+        user.isActive = !user.isActive
+        await user.save()
+      return _RS.ok(
+        res,
+        "SUCCESS",
+        "User Status changed successfully!!",
+        {},
         startTime
       );
     } catch (err) {
@@ -74,6 +95,8 @@ export class UserController {
 
   static async updateProfile(req, res, next) {
     const startTime = new Date().getTime();
+    console.log("profile another images ",req.body,req.files)
+
     try {
       const {
         firstName,
@@ -90,8 +113,9 @@ export class UserController {
         preferredLocation,
         categories,
       } = req.body;
-      const { profileImage, document, projectImages } = req.files;
+      // const { profileImage, document, projectImages } = req.files;
       const { id } = req.user;
+
       let user = await userModels.findOne({ _id: id });
       user.firstName = firstName || user.firstName;
       user.lastName = lastName || user.lastName;
@@ -107,10 +131,10 @@ export class UserController {
       user.preferredLocation =
         JSON.parse(preferredLocation) || user.preferredLocation;
       user.categories = JSON.parse(categories) || user.categories;
-      user.profileImage = profileImage[0].originalname || user.profileImage;
-      user.document = document || user.document;
+      user.profileImage = typeof req?.body?.profileImage == "string"? req?.body?.profileImage: req?.files?.profileImage[0].originalname;
+      user.document =typeof  req?.body?.document === "string"?  req?.body?.document : req?.files?.document[0].originalname;
       user.projectImages =
-        projectImages.map((item) => item.originalname) || user.projectImages;
+      req?.body?.projectImages?.length === 0 ? req?.files?.projectImages.map((item) => item.originalname) : user.projectImages;
       await user.save();
       return _RS.ok(
         res,
