@@ -35,9 +35,6 @@ class AuthValidation {
       emailId: Joi.string().email().required().messages({
         "any.required": isRequiredError("Email Id"),
       }),
-      // location: Joi.string().required().messages({
-      //   "any.required": isRequiredError("Location"),
-      // }),
       type: Joi.string().required().messages({
         "any.required": isRequiredError("Type"),
       }),
