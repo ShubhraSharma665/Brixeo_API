@@ -26,7 +26,7 @@ export class Server {
 
 	setConfigurations() {
 		this.setMongodb();
-		this.enableCors();
+		// this.enableCors();
 		this.configBodyParser();
 	}
 
