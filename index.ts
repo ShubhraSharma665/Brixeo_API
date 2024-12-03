@@ -9,13 +9,6 @@ const server = http.createServer(new Server().app); // Create HTTP server using 
 
 const port = process.env.PORT || 8004;
 
-
-// app.use(cors({
-//   origin: true,
-//   credentials: true,
-// }));
-
-
 server.listen(port, async() => {
   console.log(`Server is listening at port ${port}`);
 });
