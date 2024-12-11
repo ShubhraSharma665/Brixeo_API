@@ -4,6 +4,8 @@ import AuthRouter from "./admin/Auth.router"
 import authRoutes from './web/Auth.routes';
 import CategoryRouter from './admin/Category.router';
 import UsersRouter from './admin/Users.router';
+import CategoryRoutes from './web/Category.routes';
+import searchRoutes from './web/search.routes';
 
 
 class Routes {
@@ -17,6 +19,8 @@ class Routes {
 
 	app() {
 		this.router.use('/auth', authRoutes);
+		this.router.use('/web/category', CategoryRoutes);
+		this.router.use('/web/service', searchRoutes)
 	}
 
 	admin() {

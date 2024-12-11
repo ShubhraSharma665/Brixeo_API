@@ -1,6 +1,7 @@
 import userModels from "../models/user.models";
 import _RS from "../helpers/ResponseHelper";
 import newsletterModel from "../models/newsletter.model";
+import mongoose from "mongoose";
 const express = require("express");
 
 const cookieParser = require("cookie-parser");
@@ -27,7 +28,7 @@ export class CommanController {
         );
       }
       if (!isUserExist.isActive) {
-        return _RS.badRequest(res, "", "User is not active!!", {}, startTime);
+        return _RS.badRequest(res, "", "This account is deactivated. Please contact to admin!!", {}, startTime);
       }
 
       return _RS.ok(
@@ -62,6 +63,26 @@ export class CommanController {
         res,
         "SUCCESS",
         "Email address added successfully",
+        {},
+        startTime
+      );
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async newsLetterStatusChange(req, res, next) {
+    const startTime = new Date().getTime();
+    const { _id } = req.body
+    try {
+      let isExist = await newsletterModel.findOne({ _id: new mongoose.Types.ObjectId(_id) });
+      isExist.status = !isExist.status 
+      await isExist.save()
+
+      return _RS.ok(
+        res,
+        "SUCCESS",
+        "Status changed successfully",
         {},
         startTime
       );

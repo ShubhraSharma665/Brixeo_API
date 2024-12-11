@@ -7,7 +7,11 @@ const Newsletters = new Schema(
   {
     emailId: {
       type: String,
-      required:true
+      required: true,
+    },
+    status: {
+      type: Boolean,
+      default: true,
     },
   },
   {
@@ -20,4 +24,7 @@ const Newsletters = new Schema(
 
 mongoose.plugin(aggregatePaginate);
 
-export default model<any, AggregatePaginateModel<any>>("newsletters", Newsletters);
+export default model<any, AggregatePaginateModel<any>>(
+  "newsletters",
+  Newsletters
+);

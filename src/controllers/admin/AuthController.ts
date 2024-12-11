@@ -33,7 +33,7 @@ export class AuthController {
 				return _RS.badRequest(
 					res,
 					'',
-					"User is not active!!",
+					"This account is deactivated. Please contact to admin!!",
 					{},
 					startTime
 				);

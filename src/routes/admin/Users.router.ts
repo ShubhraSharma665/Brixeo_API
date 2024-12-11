@@ -23,8 +23,22 @@ class UserRouter {
         { name: "projectImages", maxCount: 5 },
         { name: "profileImage", maxCount: 1 },
         { name: "document", maxCount: 1 },
+        { name: "licenseImage", maxCount: 1 },
       ]),
       UserController.updateProfile
+    );
+    this.router.post(
+      "/update-bussiness-profile",
+      Authentication.admin,
+      upload.fields([
+        { name: "COGS", maxCount: 1 },
+        { name: "AOI", maxCount: 1 },
+        { name: "OA", maxCount: 1 },
+        { name: "stateIDFront", maxCount: 1 },
+        { name: "stateIDBack", maxCount: 1 },
+        { name: "COI", maxCount: 1 },
+      ]),
+      UserController.updateBussinessProfile
     );
     this.router.post(
       "/get-user",
@@ -40,11 +54,7 @@ class UserRouter {
 
   public get() {
     this.router.get("/get", Authentication.admin, UserController.GetUsersList);
-    // this.router.get(
-    // 	'/get',
-    // 	Authentication.admin,
-    // 	UserController.getProfile
-    // );
+    this.router.get("/bussiness/get", Authentication.admin, UserController.getBussinessProfile);
   }
 }
 

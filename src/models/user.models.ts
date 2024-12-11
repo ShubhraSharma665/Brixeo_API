@@ -49,6 +49,10 @@ const User = new Schema(
       type: String,
       default: null,
     },
+    actualRate: {
+      type:Number,
+      default:0
+    },
     rate: {
       type: Number,
       default: 0,
@@ -59,20 +63,20 @@ const User = new Schema(
     },
     categories: {
         type: [mongoose.Schema.Types.ObjectId],
-        ref: "categories", // Reference the Category model
+        ref: "categories",
       },
     aboutMe: {
       type: String,
       default: null,
     },
     myServices: {
-      type: String,
+      type: [],
       default: null,
     },
     // countryCode: {
     //   type: String,
     //   default: "+91",
-    // },
+    // }, 
     location: {
       type: String,
       default: null,
@@ -88,6 +92,18 @@ const User = new Schema(
     language: {
       type: String,
       default: "en",
+    },
+    licenseName:{
+      type: String,
+      default: null,
+    },
+    licenseID:{
+      type: String,
+      default: null,
+    },
+    licenseImage:{
+      type: String,
+      default: null,
     },
     profileImage: {
       type: String,
