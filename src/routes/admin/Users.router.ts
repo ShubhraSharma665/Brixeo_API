@@ -46,6 +46,11 @@ class UserRouter {
       UserController.getProfile
     );
     this.router.post(
+      "/add-sub-user",
+      Authentication.admin,
+      UserController.addSubUser
+    );
+    this.router.post(
       "/active/toggle",
       Authentication.admin,
       UserController.activeUnactive
