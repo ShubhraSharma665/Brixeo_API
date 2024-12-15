@@ -55,11 +55,14 @@ class UserRouter {
       Authentication.admin,
       UserController.activeUnactive
     );
+    this.router.post('/change-password',
+      Authentication.admin,  UserController.changePassword);
   }
 
   public get() {
     this.router.get("/get", Authentication.admin, UserController.GetUsersList);
-    this.router.get("/bussiness/get", Authentication.admin, UserController.getBussinessProfile);
+    this.router.get("/get/by-id/:id", Authentication.admin, UserController.getUserProfileById);
+    this.router.get("/bussiness/get/:id", Authentication.admin, UserController.getBussinessProfile);
   }
 }
 

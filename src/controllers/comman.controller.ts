@@ -71,6 +71,35 @@ export class CommanController {
     }
   }
 
+  static async newsLetterUpdate(req, res, next) {
+    const startTime = new Date().getTime();
+    const { _id, emailId } = req.body
+    try {
+      let isExist = await newsletterModel.findOne({ emailId: emailId });
+      if(isExist){
+        return _RS.badRequest(
+          res,
+          "ERROR",
+          "Email address already exists!",
+          {},
+          startTime
+        );
+      }
+      const newId = new mongoose.Types.ObjectId(_id)
+      await newsletterModel.updateOne({_id:newId},{$set:{emailId:emailId}})
+      
+      return _RS.ok(
+        res,
+        "SUCCESS",
+        "Email address added successfully",
+        {},
+        startTime
+      );
+    } catch (err) {
+      next(err);
+    }
+  }
+
   static async newsLetterStatusChange(req, res, next) {
     const startTime = new Date().getTime();
     const { _id } = req.body

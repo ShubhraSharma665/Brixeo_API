@@ -15,6 +15,7 @@ class CommonRoutes {
 		this.router.post('/profile', CommanController.profile);
 		this.router.post('/forgot-password', CommanController.forgotPassword);
 		this.router.post('/newsletter/add-email', CommanController.newsLetterAdd);
+		this.router.post('/newsletter/update', CommanController.newsLetterUpdate);
 		this.router.post('/newsletter/change-status', CommanController.newsLetterStatusChange);		
 	}
 

@@ -14,22 +14,29 @@ export const LOGIN_TYPES = [
   "Apple",
 ];
 
+const PermissionSchema = {
+  key: { type: String, required: true, unique: true }, // e.g., 'dashboard', 'users'
+  view: { type: Boolean, default: false },
+  add: { type: Boolean, default: false },
+  edit: { type: Boolean, default: false },
+}
+
 const User = new Schema(
   {
     firstName: {
       type: String,
       default: null,
-      required:true
+      required: true,
     },
     lastName: {
       type: String,
       default: null,
-      required:true
+      required: true,
     },
     emailId: {
       type: String,
       default: null,
-      required:true
+      required: true,
     },
     mobileNumber: {
       type: String,
@@ -53,8 +60,8 @@ const User = new Schema(
       default: null,
     },
     actualRate: {
-      type:Number,
-      default:0
+      type: Number,
+      default: 0,
     },
     rate: {
       type: Number,
@@ -64,10 +71,18 @@ const User = new Schema(
       type: Array,
       default: null,
     },
+    state: {
+      type: String,
+      default: null,
+    },
+    cities: {
+      type: Array,
+      default: null,
+    },
     categories: {
-        type: [mongoose.Schema.Types.ObjectId],
-        ref: "categories",
-      },
+      type: [mongoose.Schema.Types.ObjectId],
+      ref: "categories",
+    },
     aboutMe: {
       type: String,
       default: null,
@@ -82,7 +97,7 @@ const User = new Schema(
     },
     password: {
       type: String,
-      required:true
+      required: true,
     },
     otp: {
       type: Number,
@@ -92,15 +107,15 @@ const User = new Schema(
       type: String,
       default: "en",
     },
-    licenseName:{
+    licenseName: {
       type: String,
       default: null,
     },
-    licenseID:{
+    licenseID: {
       type: String,
       default: null,
     },
-    licenseImage:{
+    licenseImage: {
       type: String,
       default: null,
     },
@@ -130,7 +145,7 @@ const User = new Schema(
     },
     parentId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref:"users",
+      ref: "users",
       default: null,
     },
 
@@ -153,10 +168,7 @@ const User = new Schema(
       default: null,
     },
     permissions: {
-      dashboard: { view: Boolean, add: Boolean, edit: Boolean },
-      users: { view: Boolean, add: Boolean, edit: Boolean },
-      category: { view: Boolean, add: Boolean, edit: Boolean },
-      newsletter: { view: Boolean, add: Boolean, edit: Boolean },
+      type:[PermissionSchema],
     },
     loginType: { type: String, enum: LOGIN_TYPES, default: LOGIN_TYPES[0] },
   },
