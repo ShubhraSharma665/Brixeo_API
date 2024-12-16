@@ -131,7 +131,7 @@ export class UserController {
   static async addSubUser(req, res, next) {
     const startTime = new Date().getTime();
     const { firstName, lastName, email, password, permissions } = req.body;
-    const { id } = req.user;
+    const { id, type } = req.user;
     console.log("adminadmin", req.body);
     try {
       let users = await userModels.findOne({ emailId: email });
@@ -155,6 +155,20 @@ export class UserController {
         parentId: id,
         type: USER_TYPE.subAdmin,
       };
+      if(type === USER_TYPE.admin){
+        user.permissions = permissions
+      }
+      else{
+        user.permissions = [
+          { key: "Dashboard", view: true, add: true, edit: true },
+          { key: "Profile", view: true, add: true, edit: true },
+          { key: "Users", view: true, add: true, edit: true },
+          { key: "Category", view: false, add: false, edit: false },
+          { key: "Newsletters", view: false, add: false, edit: false },
+          { key: "Blogs", view: false, add: false, edit: false },
+          { key: "Change Password", view: true, add: true, edit: true },
+        ]
+      }
 
       await userModels.create(user);
       return _RS.ok(res, "SUCCESS", "User saved successfully!!", {}, startTime);
