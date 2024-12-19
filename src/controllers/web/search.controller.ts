@@ -14,17 +14,27 @@ export class SearchController {
   static async getSearchResults(req, res, next) {
     const startTime = new Date().getTime();
     try {
-      const { categoryIds } = req.body;
+      const { categoryIds, location } = req.body;
       console.log("categryIDS", categoryIds);
-      const objectIdCategoryIds = categoryIds.map(
-        (id) => new mongoose.Types.ObjectId(id)
-      );
+      const objectIdCategoryIds =
+      categoryIds?.length > 0
+        ? categoryIds.map((id) => new mongoose.Types.ObjectId(id))
+        : [];
 
       const matchStage: any = {
-        // type: { $or: [USER_TYPE.viewingAssistant, USER_TYPE.contractor] },
+        $or: [
+          { type: USER_TYPE.viewingAssistant },
+          { type: USER_TYPE.contractor },
+        ],
       };
       if (categoryIds?.length > 0) {
         matchStage.categories = { $in: objectIdCategoryIds };
+      }
+      if (location) {
+        matchStage.$or = [
+          { state: { $regex: new RegExp(location, "i") } },
+          { city: { $in: [new RegExp(location, "i")] }},
+        ];
       }
       const searchResults = await userModels.aggregate([
         {
@@ -40,10 +50,9 @@ export class SearchController {
         },
         {
           $project: {
-            name: 1,
+            firstName:1,
             rate: 1,
             projectImages: 1,
-            images: 1,
             categories: "$categoryDetails.name", // Include category names from the categoryDetails array
           },
         },
@@ -66,7 +75,6 @@ export class SearchController {
     try {
       const { id } = req.params;
       const userId = new mongoose.Types.ObjectId(id)
-      console.log("didididididdidi",id)
       const searchResults = await userModels.aggregate([
         {
           $match: {_id:userId},

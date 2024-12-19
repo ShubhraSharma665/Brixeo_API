@@ -34,18 +34,20 @@ export class AuthController {
 					firstName:firstName,
 					emailId:emailId,
                     lastName:lastName,
-					location:location
+					location:location,
+					permissions : [
+						{ key: "Dashboard", view: true, add: true, edit: true },
+						{ key: "Profile", view: true, add: true, edit: true },
+						{ key: "Users", view: true, add: true, edit: true },
+						{ key: "Category", view: false, add: false, edit: false },
+						{ key: "Newsletters", view: false, add: false, edit: false },
+						{ key: "Blogs", view: false, add: false, edit: false },
+						{ key: "Change Password", view: true, add: true, edit: true },
+					  ]
 				};
 				
 				let user = await User.create(payload);
-			
-				const tokenpayload = {
-					_id: user._id,
-					country_code: user.country_code,
-					email_id: user.email_id,
-					type: user.type,
-				};
-				const token = await Auth.getToken(tokenpayload, "1d", next);
+				
 				return _RS.api(
 					res,
 					true,
