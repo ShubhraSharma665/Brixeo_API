@@ -7,18 +7,17 @@ const Category = new Schema(
   {
     name: {
       type: String,
-      required:true
+      required: true,
     },
     parentId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "categories", 
-      default: null, 
+      ref: "categories",
+      default: null,
     },
-    
     isActive: {
       type: Boolean,
-      required:true,
-      default:true
+      required: true,
+      default: true,
     },
   },
   {

@@ -15,7 +15,7 @@ export const LOGIN_TYPES = [
 ];
 
 const PermissionSchema = {
-  key: { type: String, required: true, unique: true }, // e.g., 'dashboard', 'users'
+  key: { type: String, required: true },
   view: { type: Boolean, default: false },
   add: { type: Boolean, default: false },
   edit: { type: Boolean, default: false },

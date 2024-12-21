@@ -209,6 +209,7 @@ export class UserController {
         primaryAddress,
         secondaryAddress,
         rate,
+        title,
         actualRate,
         aboutMe,
         myServices,
@@ -233,6 +234,7 @@ export class UserController {
       user.primaryAddress = primaryAddress || user.primaryAddress;
       user.secondaryAddress = secondaryAddress || user.secondaryAddress;
       user.rate = rate || user.rate;
+      user.title = title || user.title;
       user.actualRate = actualRate || user.actualRate;
       user.aboutMe = aboutMe || user.aboutMe;
       user.myServices = JSON.parse(myServices) || user.myServices;
