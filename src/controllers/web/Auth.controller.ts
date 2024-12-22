@@ -4,6 +4,7 @@ import Auth from '../../utils/Auth';
 import { USER_TYPE } from '../../constants/user-type.enum';
 import _RS from '../../helpers/ResponseHelper';
 import User from '../../models/user.models';
+import { permission } from 'process';
 
 const cookieParser = require('cookie-parser');
 
@@ -18,7 +19,6 @@ export class AuthController {
 		try {
 			const getUser = await User.findOne({
 				emailId:emailId
-                
 			});
             const isUserValid = Object.values(USER_TYPE).includes(type)
             if(!isUserValid){
@@ -28,14 +28,26 @@ export class AuthController {
 				return _RS.badRequest(res, "", 'User already exist!!', {}, startTime);
 			} else {
 				const userpassword = await Auth.encryptPassword(password);
-				const payload = {
+				const payload:any = {
 					type: type,
 					password: userpassword,
 					firstName:firstName,
 					emailId:emailId,
                     lastName:lastName,
 					location:location,
-					permissions : [
+				};
+				if(type === USER_TYPE.propertyOwner){
+					payload.permissions = [
+						{ key: "Dashboard", view: false, add: false, edit: false },
+						{ key: "Profile", view: false, add: false, edit: false },
+						{ key: "Users", view: false, add: false, edit: false },
+						{ key: "Category", view: false, add: false, edit: false },
+						{ key: "Newsletters", view: false, add: false, edit: false },
+						{ key: "Blogs", view: false, add: false, edit: false },
+						{ key: "Change Password", view: false, add: false, edit: false },
+					  ]
+				}else{
+					payload.permissions = [
 						{ key: "Dashboard", view: true, add: true, edit: true },
 						{ key: "Profile", view: true, add: true, edit: true },
 						{ key: "Users", view: true, add: true, edit: true },
@@ -44,7 +56,8 @@ export class AuthController {
 						{ key: "Blogs", view: false, add: false, edit: false },
 						{ key: "Change Password", view: true, add: true, edit: true },
 					  ]
-				};
+				}
+				
 				
 				let user = await User.create(payload);
 				

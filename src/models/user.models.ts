@@ -15,7 +15,7 @@ export const LOGIN_TYPES = [
 ];
 
 const PermissionSchema = {
-  key: { type: String, required: true },
+  key: { type: String, required: true, unique: true }, // e.g., 'dashboard', 'users'
   view: { type: Boolean, default: false },
   add: { type: Boolean, default: false },
   edit: { type: Boolean, default: false },
@@ -168,7 +168,7 @@ const User = new Schema(
       default: null,
     },
     permissions: {
-      type:[PermissionSchema],
+      type:[],
     },
     loginType: { type: String, enum: LOGIN_TYPES, default: LOGIN_TYPES[0] },
   },
