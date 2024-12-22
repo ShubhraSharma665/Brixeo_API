@@ -168,7 +168,8 @@ const User = new Schema(
       default: null,
     },
     permissions: {
-      type:[PermissionSchema],
+      type: Array,
+      default: [],
     },
     loginType: { type: String, enum: LOGIN_TYPES, default: LOGIN_TYPES[0] },
   },
