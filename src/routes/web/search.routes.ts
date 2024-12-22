@@ -25,6 +25,8 @@ class SearchRoutes {
 
 	public get() {
 		this.router.get('/get-profile/:id', SearchController.getProfileOfUser);
+		this.router.get('/search/landing', SearchController.searchLandingResults);
+
 	}
 }
 

@@ -17,9 +17,9 @@ export class SearchController {
       const { categoryIds, location } = req.body;
       console.log("categryIDS", categoryIds);
       const objectIdCategoryIds =
-      categoryIds?.length > 0
-        ? categoryIds.map((id) => new mongoose.Types.ObjectId(id))
-        : [];
+        categoryIds?.length > 0
+          ? categoryIds.map((id) => new mongoose.Types.ObjectId(id))
+          : [];
 
       const matchStage: any = {
         $or: [
@@ -33,7 +33,7 @@ export class SearchController {
       if (location) {
         matchStage.$or = [
           { state: { $regex: new RegExp(location, "i") } },
-          { city: { $in: [new RegExp(location, "i")] }},
+          { city: { $in: [new RegExp(location, "i")] } },
         ];
       }
       const searchResults = await userModels.aggregate([
@@ -50,7 +50,7 @@ export class SearchController {
         },
         {
           $project: {
-            firstName:1,
+            firstName: 1,
             rate: 1,
             projectImages: 1,
             categories: "$categoryDetails.name", // Include category names from the categoryDetails array
@@ -70,14 +70,77 @@ export class SearchController {
     }
   }
 
+  static async searchLandingResults(req, res, next) {
+    const startTime = new Date().getTime();
+    try {
+      const result = await userModels.aggregate([
+        {
+          $facet: {
+            contractors: [
+              { $match: { type: USER_TYPE.contractor } }, // Filter for contractors
+              // {
+              //   $lookup: {
+              //     from: "categories", // The name of the categories collection
+              //     localField: "categories", // The field in the user model
+              //     foreignField: "_id", // The field in the categories collection
+              //     as: "categoryDetails", // Populated categories
+              //   },
+              // },
+              {
+                $project: {
+                  _id:1,
+                  title: 1,
+                  rate: 1,
+                  projectImages:1,
+                  // categories: "$categoryDetails.name",
+                },
+              },
+            ],
+            viewingAgents: [
+              { $match: { type: USER_TYPE.viewingAssistant } }, // Filter for viewing assistants
+              // {
+              //   $lookup: {
+              //     from: "categories",
+              //     localField: "categories",
+              //     foreignField: "_id",
+              //     as: "categoryDetails",
+              //   },
+              // },
+              {
+                $project: {
+                  _id:1,
+                  title: 1,
+                  rate: 1,
+                  projectImages:1,
+                  // categories: "$categoryDetails.name",
+                },
+              },
+            ],
+          },
+        },
+      ]);
+      
+
+      return _RS.ok(
+        res,
+        "SUCCESS",
+        "Data found successfully",
+        result,
+        startTime
+      );
+    } catch (err) {
+      next(err);
+    }
+  }
+
   static async getProfileOfUser(req, res, next) {
     const startTime = new Date().getTime();
     try {
       const { id } = req.params;
-      const userId = new mongoose.Types.ObjectId(id)
+      const userId = new mongoose.Types.ObjectId(id);
       const searchResults = await userModels.aggregate([
         {
-          $match: {_id:userId},
+          $match: { _id: userId },
         },
         {
           $lookup: {
@@ -101,8 +164,9 @@ export class SearchController {
             images: 1,
             categories: "$categoryDetails.name", // Include category names from the categoryDetails array
           },
-        },{$sort:{rate:1}}
-      ])
+        },
+        { $sort: { rate: 1 } },
+      ]);
 
       return _RS.ok(
         res,

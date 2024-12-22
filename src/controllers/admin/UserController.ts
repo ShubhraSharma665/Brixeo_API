@@ -19,7 +19,6 @@ export class UserController {
     try {
       const orConditions: any = [];
       const orTypeCondition = [];
-      console.log("andari look here", id, type);
       const matchStage: any = {};
       if (type === USER_TYPE.contractor) {
         // If the user type is contractor
@@ -61,6 +60,8 @@ export class UserController {
         ];
       }
       if (type === USER_TYPE.admin) {
+      console.log("andari look here", id, type);
+
         matchStage.$and = [{ type: { $ne: "admin" } }];
       }
 
