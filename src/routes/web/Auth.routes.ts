@@ -13,7 +13,7 @@ class AuthRouter {
 	}
 
 	public delete() {
-		
+		 
 	}
 
 	public post() {
