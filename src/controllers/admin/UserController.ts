@@ -33,42 +33,46 @@ export class UserController {
           {
             $and: [
               { type: { $ne: "admin" } },
-              { type: USER_TYPE.subAdmin }, // Get child profiles with subadmin type
+              { type: USER_TYPE.subContractor }, // Get child profiles with subadmin type
               { parentId: newId }, // Match subadmin's parentId with the contractor's ID
             ],
           },
         ];
       }
 
-      if (type === USER_TYPE.viewingAssistant) {
+      if (type === USER_TYPE.viewingAgent) {
         // If the user type is viewing assistant
         matchStage.$or = [
           {
             $and: [
               { type: { $ne: "admin" } },
-              { type: USER_TYPE.viewingAssistant },
+              { type: USER_TYPE.viewingAgent },
               { _id: newId },
             ],
           },
           {
             $and: [
               { type: { $ne: "admin" } },
-              { type: USER_TYPE.subAdmin },
+              { type: USER_TYPE.subViewingAgent },
               { parentId: newId },
             ],
           },
         ];
       }
       if (type === USER_TYPE.admin) {
-      console.log("andari look here", id, type);
-
         matchStage.$and = [{ type: { $ne: "admin" } }];
       }
 
       if (type === USER_TYPE.subAdmin) {
-        // If the user type is subAdmin
         matchStage.$or = [{ _id: newId }];
       }
+      if (type === USER_TYPE.subViewingAgent) {
+        matchStage.$or = [{ _id: newId }];
+      }
+      if (type === USER_TYPE.subContractor) {
+        matchStage.$or = [{ _id: newId }];
+      }
+
 
       if (search) {
         orConditions.push(
@@ -133,7 +137,6 @@ export class UserController {
     const startTime = new Date().getTime();
     const { firstName, lastName, email, password, permissions } = req.body;
     const { id, type } = req.user;
-    console.log("adminadmin", req.body);
     try {
       let users = await userModels.findOne({ emailId: email });
       console.log("check", users);
@@ -147,19 +150,23 @@ export class UserController {
         );
       }
       const userpassword = await Auth.encryptPassword(password);
-      const user = {
+      const user: any = {
         firstName: firstName,
         lastName: lastName,
         emailId: email,
         password: userpassword,
-        permissions: permissions,
         parentId: id,
-        type: USER_TYPE.subAdmin,
       };
-      if(type === USER_TYPE.admin){
-        user.permissions = permissions
-      }
-      else{
+      if (type === USER_TYPE.admin) {
+        user.permissions = permissions,
+        user.type = USER_TYPE.subAdmin
+      } else {
+        if (type === USER_TYPE.contractor) {
+          user.type = USER_TYPE.subContractor;
+        }
+        if (type === USER_TYPE.viewingAgent) {
+          user.type = USER_TYPE.subViewingAgent;
+        }
         user.permissions = [
           { key: "Dashboard", view: true, add: true, edit: true },
           { key: "Profile", view: true, add: true, edit: true },
@@ -168,7 +175,7 @@ export class UserController {
           { key: "Newsletters", view: false, add: false, edit: false },
           { key: "Blogs", view: false, add: false, edit: false },
           { key: "Change Password", view: true, add: true, edit: true },
-        ]
+        ];
       }
 
       await userModels.create(user);

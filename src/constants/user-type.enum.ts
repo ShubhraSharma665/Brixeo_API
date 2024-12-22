@@ -1,7 +1,9 @@
 export const USER_TYPE = {
   admin: "admin",
   propertyOwner: "propertyOwner",
-  viewingAssistant:"viewingAssistant",
+  viewingAgent:"viewingAgent",
   contractor:"contractor",
-  subAdmin:"SubAdmin"
+  subAdmin:"subAdmin",
+  subContractor:"subContractor",
+  subViewingAgent:"subViewingAgent",
 };

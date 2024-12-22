@@ -34,7 +34,7 @@ export class AuthController {
 					firstName:firstName,
 					emailId:emailId,
                     lastName:lastName,
-					location:location,
+					// location:location,
 				};
 				if(type === USER_TYPE.propertyOwner){
 					payload.permissions = [
@@ -46,7 +46,18 @@ export class AuthController {
 						{ key: "Blogs", view: false, add: false, edit: false },
 						{ key: "Change Password", view: false, add: false, edit: false },
 					  ]
-				}else{
+				}if(type === USER_TYPE.contractor){
+					payload.permissions = [
+						{ key: "Dashboard", view: true, add: true, edit: true },
+						{ key: "Profile", view: true, add: true, edit: true },
+						{ key: "Users", view: true, add: true, edit: true },
+						{ key: "Category", view: false, add: false, edit: false },
+						{ key: "Newsletters", view: false, add: false, edit: false },
+						{ key: "Blogs", view: false, add: false, edit: false },
+						{ key: "Change Password", view: true, add: true, edit: true },
+					  ]
+				}
+				if(type === USER_TYPE.viewingAgent){
 					payload.permissions = [
 						{ key: "Dashboard", view: true, add: true, edit: true },
 						{ key: "Profile", view: true, add: true, edit: true },

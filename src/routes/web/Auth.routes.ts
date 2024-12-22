@@ -13,9 +13,7 @@ class AuthRouter {
 	}
 
 	public delete() {
-		// this.router.delete(
-		//   "/delete/entire", Authentication.admin, AuthController.cleanupData
-		// )
+		
 	}
 
 	public post() {

@@ -99,6 +99,10 @@ const User = new Schema(
       type: String,
       required: true,
     },
+    title: {
+      type: String,
+      default:null
+    },
     otp: {
       type: Number,
       default: null,
@@ -153,10 +157,12 @@ const User = new Schema(
       type: String,
       enum: [
         USER_TYPE.admin,
-        USER_TYPE.viewingAssistant,
+        USER_TYPE.viewingAgent,
         USER_TYPE.propertyOwner,
         USER_TYPE.contractor,
         USER_TYPE.subAdmin,
+        USER_TYPE.subViewingAgent,
+        USER_TYPE.subContractor
       ],
     },
     deviceToken: {

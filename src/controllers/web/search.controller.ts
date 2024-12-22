@@ -23,7 +23,7 @@ export class SearchController {
 
       const matchStage: any = {
         $or: [
-          { type: USER_TYPE.viewingAssistant },
+          { type: USER_TYPE.viewingAgent },
           { type: USER_TYPE.contractor },
         ],
       };
@@ -97,7 +97,7 @@ export class SearchController {
               },
             ],
             viewingAgents: [
-              { $match: { type: USER_TYPE.viewingAssistant } }, // Filter for viewing assistants
+              { $match: { type: USER_TYPE.viewingAgent } }, // Filter for viewing assistants
               // {
               //   $lookup: {
               //     from: "categories",
