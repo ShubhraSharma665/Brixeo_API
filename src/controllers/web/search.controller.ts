@@ -14,7 +14,7 @@ export class SearchController {
   static async getSearchResults(req, res, next) {
     const startTime = new Date().getTime();
     try {
-      const { categoryIds, location } = req.body;
+      const { categoryIds, location, rateSort } = req.body;
       console.log("categryIDS", categoryIds);
       const objectIdCategoryIds =
         categoryIds?.length > 0
@@ -33,30 +33,43 @@ export class SearchController {
       if (location) {
         matchStage.$or = [
           { state: { $regex: new RegExp(location, "i") } },
-          { city: { $in: [new RegExp(location, "i")] } },
+          { cities: { $elemMatch: { $regex: new RegExp(location, "i") } } },
         ];
       }
-      const searchResults = await userModels.aggregate([
+      
+      const pipeline: any[] = [
         {
           $match: matchStage,
         },
         {
           $lookup: {
-            from: "categories", // Name of the categories collection
-            localField: "categories", // Field in user schema (array of categoryIds)
-            foreignField: "_id", // Field in category schema (_id of categories)
-            as: "categoryDetails", // Alias for the result (array of category objects)
+            from: "categories",
+            localField: "categories",
+            foreignField: "_id",
+            as: "categoryDetails"
           },
         },
         {
           $project: {
             firstName: 1,
             rate: 1,
+            title: 1,
             projectImages: 1,
-            categories: "$categoryDetails.name", // Include category names from the categoryDetails array
+            categories: "$categoryDetails.name",
           },
         },
-      ]);
+      ];
+    
+      if (rateSort) {
+        pipeline.push({
+          $sort: {
+            rate: rateSort === "highToLow" ? -1 : 1, 
+          },
+        });
+      }
+
+      const searchResults = await userModels.aggregate(pipeline);
+
 
       return _RS.ok(
         res,
