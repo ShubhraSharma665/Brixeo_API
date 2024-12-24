@@ -14,7 +14,7 @@ export class SearchController {
   static async getSearchResults(req, res, next) {
     const startTime = new Date().getTime();
     try {
-      const { categoryIds, location, rateSort } = req.body;
+      const { categoryIds, location, rateSort, min,max } = req.body;
       console.log("categryIDS", categoryIds);
       const objectIdCategoryIds =
         categoryIds?.length > 0
@@ -22,10 +22,7 @@ export class SearchController {
           : [];
 
       const matchStage: any = {
-        $or: [
-          { type: USER_TYPE.viewingAgent },
-          { type: USER_TYPE.contractor },
-        ],
+        $or: [{ type: USER_TYPE.viewingAgent }, { type: USER_TYPE.contractor }],
       };
       if (categoryIds?.length > 0) {
         matchStage.categories = { $in: objectIdCategoryIds };
@@ -36,7 +33,13 @@ export class SearchController {
           { cities: { $elemMatch: { $regex: new RegExp(location, "i") } } },
         ];
       }
-      
+      if(min & max){
+        matchStage.$and = [
+          { rate: { $gte: Number(min) } },
+          { rate: { $lte: Number(max) } },
+        ];
+      }
+    
       const pipeline: any[] = [
         {
           $match: matchStage,
@@ -46,7 +49,7 @@ export class SearchController {
             from: "categories",
             localField: "categories",
             foreignField: "_id",
-            as: "categoryDetails"
+            as: "categoryDetails",
           },
         },
         {
@@ -59,17 +62,16 @@ export class SearchController {
           },
         },
       ];
-    
+
       if (rateSort) {
         pipeline.push({
           $sort: {
-            rate: rateSort === "highToLow" ? -1 : 1, 
+            rate: rateSort === "highToLow" ? -1 : 1,
           },
         });
       }
 
       const searchResults = await userModels.aggregate(pipeline);
-
 
       return _RS.ok(
         res,
@@ -101,10 +103,10 @@ export class SearchController {
               // },
               {
                 $project: {
-                  _id:1,
+                  _id: 1,
                   title: 1,
                   rate: 1,
-                  projectImages:1,
+                  projectImages: 1,
                   // categories: "$categoryDetails.name",
                 },
               },
@@ -121,10 +123,10 @@ export class SearchController {
               // },
               {
                 $project: {
-                  _id:1,
+                  _id: 1,
                   title: 1,
                   rate: 1,
-                  projectImages:1,
+                  projectImages: 1,
                   // categories: "$categoryDetails.name",
                 },
               },
@@ -132,7 +134,6 @@ export class SearchController {
           },
         },
       ]);
-      
 
       return _RS.ok(
         res,
