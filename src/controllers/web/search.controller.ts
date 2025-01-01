@@ -14,7 +14,7 @@ export class SearchController {
   static async getSearchResults(req, res, next) {
     const startTime = new Date().getTime();
     try {
-      const { categoryIds, location, rateSort, min,max } = req.body;
+      const { categoryIds, location, rateSort, min,max, search } = req.body;
       console.log("categryIDS", categoryIds);
       const objectIdCategoryIds =
         categoryIds?.length > 0
@@ -33,7 +33,7 @@ export class SearchController {
           { cities: { $elemMatch: { $regex: new RegExp(location, "i") } } },
         ];
       }
-      if(min & max){
+      if(min && max){
         matchStage.$and = [
           { rate: { $gte: Number(min) } },
           { rate: { $lte: Number(max) } },
@@ -62,6 +62,17 @@ export class SearchController {
           },
         },
       ];
+
+      if (search) {
+        pipeline.push({
+          $match: {
+            $or: [
+              { title: { $regex: new RegExp(search, "i") } }, // Match in `title` field
+              { "categories": { $regex: new RegExp(search, "i") } }, // Match in category names
+            ],
+          },
+        });
+      }
 
       if (rateSort) {
         pipeline.push({
