@@ -182,6 +182,8 @@ export class SearchController {
             primaryAddress: 1,
             secondaryAddress: 1,
             aboutMe: 1,
+            title:1,
+            actualRate:1,
             myServices: 1,
             profileImage: 1,
             rate: 1,
