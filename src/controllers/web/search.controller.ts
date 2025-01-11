@@ -21,23 +21,34 @@ export class SearchController {
           ? categoryIds.map((id) => new mongoose.Types.ObjectId(id))
           : [];
 
-      const matchStage: any = {
-        $or: [{ type: USER_TYPE.viewingAgent }, { type: USER_TYPE.contractor }],
-      };
+          const matchStage: any = {
+            $and: [
+              { type: { $ne: USER_TYPE.admin } }, // Exclude 'admin'
+              {
+                $or: [
+                  { type: USER_TYPE.viewingAgent },
+                  { type: USER_TYPE.contractor },
+                ],
+              },
+            ],
+          };
+
       if (categoryIds?.length > 0) {
         matchStage.categories = { $in: objectIdCategoryIds };
       }
       if (location) {
-        matchStage.$or = [
-          { state: { $regex: new RegExp(location, "i") } },
-          { cities: { $elemMatch: { $regex: new RegExp(location, "i") } } },
-        ];
+        matchStage.$and.push({
+          $or: [
+            { state: { $regex: new RegExp(location, "i") } },
+            { cities: { $elemMatch: { $regex: new RegExp(location, "i") } } },
+          ],
+        });
       }
-      if(min && max){
-        matchStage.$and = [
+      if (min && max) {
+        matchStage.$and.push(
           { rate: { $gte: Number(min) } },
-          { rate: { $lte: Number(max) } },
-        ];
+          { rate: { $lte: Number(max) } }
+        );
       }
     
       const pipeline: any[] = [
@@ -57,6 +68,7 @@ export class SearchController {
             firstName: 1,
             rate: 1,
             title: 1,
+            type:1,
             projectImages: 1,
             categories: "$categoryDetails.name",
           },
@@ -123,7 +135,7 @@ export class SearchController {
               },
             ],
             viewingAgents: [
-              { $match: { type: USER_TYPE.viewingAgent } }, // Filter for viewing assistants
+              { $match: { type: USER_TYPE.viewingAgent } }, // Filter for viewing agents
               // {
               //   $lookup: {
               //     from: "categories",
@@ -179,8 +191,10 @@ export class SearchController {
           $project: {
             firstName: 1,
             lastName: 1,
-            primaryAddress: 1,
-            secondaryAddress: 1,
+            // primaryAddress: 1,
+            // secondaryAddress: 1,
+            cities:1,
+            state:1,
             aboutMe: 1,
             title:1,
             actualRate:1,

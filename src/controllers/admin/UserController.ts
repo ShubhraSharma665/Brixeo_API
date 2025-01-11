@@ -41,7 +41,7 @@ export class UserController {
       }
 
       if (type === USER_TYPE.viewingAgent) {
-        // If the user type is viewing assistant
+        // If the user type is viewing agents
         matchStage.$or = [
           {
             $and: [
@@ -218,9 +218,10 @@ export class UserController {
         secondaryAddress,
         rate,
         title,
-        actualRate,
+        bussinessName,
+        // actualRate,
         aboutMe,
-        myServices,
+        // myServices,
         preferredLocation,
         categories,
         licenseName,
@@ -230,7 +231,6 @@ export class UserController {
       } = req.body;
       // const { profileImage, document, projectImages } = req.files;
       const { id } = req.user;
-      console.log("valid json or not", myServices);
 
       let user = await userModels.findOne({ _id: id });
       user.firstName = firstName || user.firstName;
@@ -243,15 +243,16 @@ export class UserController {
       user.secondaryAddress = secondaryAddress || user.secondaryAddress;
       user.rate = rate || user.rate;
       user.title = title || user.title;
-      user.actualRate = actualRate || user.actualRate;
+      user.bussinessName = bussinessName || user.bussinessName;
+      // user.actualRate = actualRate || user.actualRate;
       user.aboutMe = aboutMe || user.aboutMe;
-      user.myServices = JSON.parse(myServices) || user.myServices;
+      // user.myServices = JSON.parse(myServices) || user.myServices;
       user.licenseID = licenseID || user.licenseID;
       user.licenseName = licenseName || user.licenseName;
       user.state = state || user.state;
       user.cities = JSON.parse(cities) || user.cities;
-      user.preferredLocation =
-        JSON.parse(preferredLocation) || user.preferredLocation;
+      // user.preferredLocation =
+      //   JSON.parse(preferredLocation) || user.preferredLocation;
       user.categories = JSON.parse(categories) || user.categories;
       user.profileImage =
         typeof req?.body?.profileImage == "string"

@@ -103,6 +103,10 @@ const User = new Schema(
       type: String,
       default:null
     },
+    bussinessName: {
+      type: String,
+      default:null
+    },
     otp: {
       type: Number,
       default: null,
