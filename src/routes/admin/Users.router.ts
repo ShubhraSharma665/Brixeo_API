@@ -61,6 +61,7 @@ class UserRouter {
 
   public get() {
     this.router.get("/get", Authentication.admin, UserController.GetUsersList);
+    this.router.get("/get-sub-users", Authentication.admin, UserController.GetSubUsersList);
     this.router.get("/get/by-id/:id", Authentication.admin, UserController.getUserProfileById);
     this.router.get("/bussiness/get/:id", Authentication.admin, UserController.getBussinessProfile);
   }

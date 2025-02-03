@@ -21,15 +21,119 @@ export class UserController {
       const orTypeCondition = [];
       const matchStage: any = {};
       if (type === USER_TYPE.contractor) {
-        // If the user type is contractor
         matchStage.$or = [
           {
             $and: [
               { type: { $ne: "admin" } },
-              { type: USER_TYPE.contractor }, // Get the contractor profile
+              { type: USER_TYPE.contractor },
               { _id: newId },
             ],
           },
+          // {
+          //   $and: [
+          //     { type: { $ne: "admin" } },
+          //     { type: USER_TYPE.subContractor }, // Get child profiles with subadmin type
+          //     { parentId: newId }, // Match subadmin's parentId with the contractor's ID
+          //   ],
+          // },
+        ];
+      }
+
+      if (type === USER_TYPE.viewingAgent) {
+        matchStage.$or = [
+          {
+            $and: [
+              { type: { $ne: "admin" } },
+              { type: USER_TYPE.viewingAgent },
+              { _id: newId },
+            ],
+          },
+          // {
+          //   $and: [
+          //     { type: { $ne: "admin" } },
+          //     { type: USER_TYPE.subViewingAgent },
+          //     { parentId: newId },
+          //   ],
+          // },
+        ];
+      }
+      if (type === USER_TYPE.admin) {
+        matchStage.$and = [
+          { type: { $ne: "admin" } },
+          { type: { $ne: USER_TYPE.subAdmin } },
+          { type: { $ne: USER_TYPE.subContractor } },
+          { type: { $ne: USER_TYPE.subViewingAgent } },
+        ];
+      }
+
+      if (type === USER_TYPE.subAdmin) {
+        matchStage.$and = [{ _id: { $ne: newId }}];
+      }
+      if (type === USER_TYPE.subViewingAgent) {
+        matchStage.$or = [{ _id: newId }];
+      }
+      if (type === USER_TYPE.subContractor) {
+        matchStage.$or = [{ _id: newId }];
+      }
+
+      if (search) {
+        orConditions.push(
+          {
+            emailId: { $regex: search, $options: "i" },
+          },
+          { firstName: { $regex: search, $options: "i" } },
+          { lastName: { $regex: search, $options: "i" } }
+        );
+      }
+
+      let offset = (Number(page) - 1) * Number(limit) || 0;
+      // Combine match conditions with $or conditions
+      if (orConditions.length > 0) {
+        matchStage.$or = orConditions;
+      }
+      console.log(offset, req.query);
+
+      const list = await userModels
+        .aggregate([
+          {
+            $match: matchStage,
+          },
+        ])
+        .skip(offset)
+        .limit(parseInt(limit));
+
+      const totalCount = await userModels.countDocuments(matchStage);
+
+      return _RS.ok(
+        res,
+        "SUCCESS",
+        "Users found successfully!!",
+        { list, totalCount: totalCount, page: page },
+        startTime
+      );
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async GetSubUsersList(req, res, next) {
+    const startTime = new Date().getTime();
+    let { page, limit, search } = req.query;
+    const { id, type } = req.user;
+    const newId = new mongoose.Types.ObjectId(id);
+    try {
+      const orConditions: any = [];
+      const orTypeCondition = [];
+      const matchStage: any = {};
+      if (type === USER_TYPE.contractor) {
+        matchStage.$or = [
+          // {
+          //   $and: [
+          //     { type: { $ne: "admin" } },
+          //     { type: USER_TYPE.contractor },
+          //     { _id: newId },
+          //   ],
+          // },
           {
             $and: [
               { type: { $ne: "admin" } },
@@ -43,13 +147,13 @@ export class UserController {
       if (type === USER_TYPE.viewingAgent) {
         // If the user type is viewing agents
         matchStage.$or = [
-          {
-            $and: [
-              { type: { $ne: "admin" } },
-              { type: USER_TYPE.viewingAgent },
-              { _id: newId },
-            ],
-          },
+          // {
+          //   $and: [
+          //     { type: { $ne: "admin" } },
+          //     { type: USER_TYPE.viewingAgent },
+          //     { _id: newId },
+          //   ],
+          // },
           {
             $and: [
               { type: { $ne: "admin" } },
@@ -60,19 +164,22 @@ export class UserController {
         ];
       }
       if (type === USER_TYPE.admin) {
-        matchStage.$and = [{ type: { $ne: "admin" } }];
+        matchStage.$and = [
+          { type: { $ne: "admin" } },
+          { type: { $ne: USER_TYPE.contractor } },
+          { type: { $ne: USER_TYPE.viewingAgent } },
+        ];
       }
 
       if (type === USER_TYPE.subAdmin) {
-        matchStage.$or = [{ _id: newId }];
+        matchStage.$and = [{ _id: { $ne: newId } },{ _id: { $eq: newId }}];
       }
       if (type === USER_TYPE.subViewingAgent) {
-        matchStage.$or = [{ _id: newId }];
+        matchStage.$and = [{ _id: newId },{type:"admin"}];
       }
       if (type === USER_TYPE.subContractor) {
-        matchStage.$or = [{ _id: newId }];
+        matchStage.$or = [{ _id: newId },{type:"admin"}];
       }
-
 
       if (search) {
         orConditions.push(
@@ -138,7 +245,7 @@ export class UserController {
     const { firstName, lastName, email, password, permissions } = req.body;
     const { id, type } = req.user;
     try {
-      let users = await userModels.findOne({ emailId: email });
+      let users = await userModels.findOne({ emailId: email.toLowerCase() });
       console.log("check", users);
       if (users) {
         return _RS.notAcceptable(
@@ -153,13 +260,12 @@ export class UserController {
       const user: any = {
         firstName: firstName,
         lastName: lastName,
-        emailId: email,
+        emailId: email.toLowerCase(),
         password: userpassword,
         parentId: id,
       };
       if (type === USER_TYPE.admin) {
-        user.permissions = permissions,
-        user.type = USER_TYPE.subAdmin
+        (user.permissions = permissions), (user.type = USER_TYPE.subAdmin);
       } else {
         if (type === USER_TYPE.contractor) {
           user.type = USER_TYPE.subContractor;
@@ -174,6 +280,7 @@ export class UserController {
           { key: "Category", view: false, add: false, edit: false },
           { key: "Newsletters", view: false, add: false, edit: false },
           { key: "Blogs", view: false, add: false, edit: false },
+          { key: "Chats", view: false, add: false, edit: false },
           { key: "Change Password", view: true, add: true, edit: true },
         ];
       }

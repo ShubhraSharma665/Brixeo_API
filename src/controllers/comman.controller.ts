@@ -47,7 +47,7 @@ export class CommanController {
     const startTime = new Date().getTime();
     const { emailId } = req.body
     try {
-      let isExist = await newsletterModel.findOne({ emailId: emailId });
+      let isExist = await newsletterModel.findOne({ emailId: emailId.toLowerCase() });
       if(isExist){
         return _RS.badRequest(
           res,
@@ -75,7 +75,7 @@ export class CommanController {
     const startTime = new Date().getTime();
     const { _id, emailId } = req.body
     try {
-      let isExist = await newsletterModel.findOne({ emailId: emailId });
+      let isExist = await newsletterModel.findOne({ emailId: emailId.toLowerCase() });
       if(isExist){
         return _RS.badRequest(
           res,
@@ -86,7 +86,7 @@ export class CommanController {
         );
       }
       const newId = new mongoose.Types.ObjectId(_id)
-      await newsletterModel.updateOne({_id:newId},{$set:{emailId:emailId}})
+      await newsletterModel.updateOne({_id:newId},{$set:{emailId:emailId.toLowerCase()}})
       
       return _RS.ok(
         res,
@@ -169,7 +169,7 @@ export class CommanController {
     const startTime = new Date().getTime();
     const { emailId } = req.body
     try {
-      let isUserExist = await userModels.findOne({ emailId: emailId });
+      let isUserExist = await userModels.findOne({ emailId: emailId.toLowerCase() });
       if(!isUserExist){
         return _RS.badRequest(
           res,

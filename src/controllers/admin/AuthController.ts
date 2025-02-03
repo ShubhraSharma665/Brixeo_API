@@ -16,7 +16,7 @@ export class AuthController {
 		const { email, password } = req.body;
 		try {
 			let isUserExist = await User.findOne({
-				emailId: email,
+				emailId: email.toLowerCase(),
 				type: { $in: [USER_TYPE.admin,USER_TYPE.contractor,USER_TYPE.propertyOwner,USER_TYPE.viewingAgent,USER_TYPE.subAdmin,USER_TYPE.subViewingAgent,USER_TYPE.subContractor] },
 			})
 

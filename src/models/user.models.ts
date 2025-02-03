@@ -192,4 +192,4 @@ const User = new Schema(
 
 mongoose.plugin(aggregatePaginate);
 
-export default model<any, AggregatePaginateModel<any>>("User", User);
+export default model<any, AggregatePaginateModel<any>>("users", User);

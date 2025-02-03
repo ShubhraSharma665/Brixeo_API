@@ -32,7 +32,7 @@ class Authentication {
 			}
 			const decoded: any = await Auth.decodeJwt(token);
 			const currentUser = await User.findOne({
-				_id: decoded._id,
+				_id: decoded.id,
 				type: USER_TYPE.propertyOwner,
 			});
 
@@ -129,7 +129,6 @@ class Authentication {
 					startTime
 				);
 			}
-			console.log("here it is ",decoded)
 			req.user = currentUser;
 			req.user.id = decoded.id;
 			req.user.type = decoded.type;
