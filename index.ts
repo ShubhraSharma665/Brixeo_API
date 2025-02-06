@@ -21,7 +21,7 @@ const server = http.createServer(new Server().app); // Use the Express app insta
 // Socket.io setup
 export const io = socketIo(server, {
   cors: {
-    origin: ["https://brixeopro.com/", "https://brixeopro.com/login"],
+    origin: ["https://brixeopro.com", "https://brixeopro.com/", "https://brixeopro.com/chats"],
     methods: ["GET", "POST"],
     allowedHeaders: ["my-custom-header"],
     credentials: true,

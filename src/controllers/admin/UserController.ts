@@ -263,6 +263,7 @@ export class UserController {
         emailId: email.toLowerCase(),
         password: userpassword,
         parentId: id,
+        isShow:false
       };
       if (type === USER_TYPE.admin) {
         (user.permissions = permissions), (user.type = USER_TYPE.subAdmin);
@@ -293,11 +294,15 @@ export class UserController {
   }
   static async activeUnactive(req, res, next) {
     const startTime = new Date().getTime();
-    const { id } = req.body;
+    const { id, showActive } = req.body;
 
     try {
       let user = await userModels.findOne({ _id: id });
-      user.isActive = !user.isActive;
+      if(showActive){
+        user.isAvailable = !user.isAvailable;
+      }else{
+        user.isActive = !user.isActive;
+      }
       await user.save();
       return _RS.ok(
         res,
@@ -326,10 +331,7 @@ export class UserController {
         rate,
         title,
         bussinessName,
-        // actualRate,
         aboutMe,
-        // myServices,
-        preferredLocation,
         categories,
         licenseName,
         licenseID,
@@ -358,8 +360,7 @@ export class UserController {
       user.licenseName = licenseName || user.licenseName;
       user.state = state || user.state;
       user.cities = JSON.parse(cities) || user.cities;
-      // user.preferredLocation =
-      //   JSON.parse(preferredLocation) || user.preferredLocation;
+      user.isShow = true;
       user.categories = JSON.parse(categories) || user.categories;
       user.profileImage =
         typeof req?.body?.profileImage == "string"

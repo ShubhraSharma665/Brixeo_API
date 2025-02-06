@@ -51,6 +51,14 @@ const User = new Schema(
       type: String,
       default: null,
     },
+    isShow:{
+      type:Boolean,
+      default:false
+    },
+    isAvailable:{
+      type:Boolean,
+      default:true
+    },
     primaryAddress: {
       type: String,
       default: null,

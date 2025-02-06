@@ -15,7 +15,8 @@ export class SearchController {
     const startTime = new Date().getTime();
     try {
       const { categoryIds, location, rateSort, min,max, search } = req.body;
-      console.log("categryIDS", categoryIds);
+      const { page, limit=2  } = req.query
+      console.log("categryIDS", page,limit);
       const objectIdCategoryIds =
         categoryIds?.length > 0
           ? categoryIds.map((id) => new mongoose.Types.ObjectId(id))
@@ -30,6 +31,7 @@ export class SearchController {
                   { type: USER_TYPE.contractor },
                 ],
               },
+              { isShow: true }
             ],
           };
 
@@ -93,14 +95,31 @@ export class SearchController {
           },
         });
       }
+      pipeline.push({
+        $facet: {
+          totalRecords: [{ $count: "count" }], // Get total count
+          results: [
+            { $skip: (Number(page) - 1) * Number(limit) }, // Skip previous pages
+            { $limit: Number(limit) }, // Limit results per page
+          ],
+        },
+      });
 
       const searchResults = await userModels.aggregate(pipeline);
 
+      const results = searchResults[0]?.results || [];
+      const totalRecords = searchResults[0]?.totalRecords?.[0]?.count || 0;
+  
       return _RS.ok(
         res,
         "SUCCESS",
         "Data found successfully",
-        searchResults,
+        {
+          data: results,
+          totalRecords: totalRecords,
+          page,
+          totalPages: Math.ceil(totalRecords / limit),
+        },
         startTime
       );
     } catch (err) {
