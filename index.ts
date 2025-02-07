@@ -1,36 +1,26 @@
 import { Server } from "./src/server";
-const http = require("http");
-const express = require("express");
-const socketIo = require("socket.io");
-const cors = require("cors");
-import { SOCKET_CONNECT } from './src/services/socket/index';
+import http from "http";
+import express from "express";
+import { Server as SocketServer } from "socket.io";
+import cors from "cors";
+import { SOCKET_CONNECT } from "./src/services/socket/index";
 
-const app = express();
+const app = new Server().app;
 const port = process.env.PORT || 8004;
 
-// CORS middleware
-app.use(
-  cors({
-    origin: true,
-    credentials: true,
-  })
-);
+app.use(cors({ origin: true, credentials: true }));
 
-const server = http.createServer(new Server().app); // Use the Express app instance
+const server = http.createServer(app);
 
-// Socket.io setup
-export const io = socketIo(server, {
+const io = new SocketServer(server, {
   cors: {
-    origin: ["https://brixeopro.com", "https://brixeopro.com/", "https://brixeopro.com/chats"],
+    origin: ["http://localhost:3000", "https://brixeopro.com", "https://brixeopro.com/chats"],
     methods: ["GET", "POST"],
-    allowedHeaders: ["my-custom-header"],
     credentials: true,
   },
 });
 
 server.listen(port, () => {
-  // socketObj.init(server);
-  // socketObj.connect();
-  SOCKET_CONNECT(io)
-  console.log(`Server is listening at port ${port}`);
+  SOCKET_CONNECT(io);
+  console.log(`Server is running on port ${port}`);
 });

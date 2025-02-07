@@ -1,219 +1,205 @@
 import chatModel from "../../models/chat.model";
 import messageModel from "../../models/message.model";
-
-import * as Jwt from "jsonwebtoken";
-import { Server, Socket } from "socket.io";
 import userModels from "../../models/user.models";
 import Auth from "../../utils/Auth";
 import moment from "moment";
 import mongoose from "mongoose";
 
 const sockets = {};
-const onlineUsers = [];
-export const SOCKET_CONNECT = (io) => {
-  // **Authenticate socket connection**
-  const checkAuthentication = async (socket, next) => {
-    try {
-      const token = socket.handshake.auth.token;
-      if (!token) {
-        return next(new Error("Authentication Failed"));
-      }
-      const decoded: any = await Auth.decodeJwt(token);
-      let currentUser = await userModels.findOne({ _id: decoded.id });
-      socket.data.user = currentUser;
-      next();
-    } catch (error) {
-      next(new Error("Authentication Failed"));
-    }
-  };
+const onlineUsers = new Set();
 
-  // **Socket connection**
-  io.use(checkAuthentication).on("connection", async (socket) => {
+export const SOCKET_CONNECT = (io) => {
+  io.use(checkAuthentication).on("connection", (socket) => handleConnection(socket, io));
+};
+
+// **Authenticate Socket Connection**
+const checkAuthentication = async (socket, next) => {
+  try {
+    const token = socket.handshake.auth?.token;
+    if (!token) return next(new Error("Authentication token is required"));
+
+    const decoded:any = await Auth.decodeJwt(token);
+    if (!decoded?.id) return next(new Error("Invalid token"));
+
+    const currentUser = await userModels.findById(decoded.id);
+    if (!currentUser) return next(new Error("User not found"));
+
+    socket.data.user = currentUser;
+    next();
+  } catch (error) {
+    console.error("Socket Authentication Error:", error.message);
+    next(new Error("Authentication Failed"));
+  }
+};
+
+// **Handle Socket Connection**
+const handleConnection = async (socket, io) => {
+  try {
     const userId = socket.data.user._id.toString();
     sockets[userId] = socket;
-    onlineUsers.push(userId);
+    onlineUsers.add(userId);
     socket.join(userId);
-
     console.log(`${socket.data.user.firstName} connected`);
 
-    // **Send Message**
-    socket.on("sendMessage", async (data) => {
-      const { receiverId, message, file } = data;
-      const senderId = socket.data.user._id;
+    socket.on("sendMessage", (data) => handleSendMessage(socket, data, io)); // Pass io
+    socket.on("chatHistory", (data) => handleChatHistory(socket, data));
+    socket.on("chatList", () => handleChatList(socket));
+    socket.on("markMessagesAsRead", (data) => handleMarkMessagesAsRead(socket, data));
+    socket.on("disconnect", () => handleDisconnect(socket));
+  } catch (error) {
+    console.error("Socket Connection Error:", error.message);
+    throw new error(error)
+  }
+};
 
-      let chat = await chatModel.findOne({
-        participants: { $all: [senderId, receiverId] },
-      });
+// **Handle Sending Messages**
+const handleSendMessage = async (socket, data, io) => {
+  try {
+    const { receiverId, message, file } = data;
+    const senderId = socket.data.user._id;
 
-      if (!chat) {
-        chat = new chatModel({ participants: [senderId, receiverId] });
-        await chat.save();
-      }
-      console.log("handle file change", data);
+    if (!receiverId || (!message && !file)) {
+      socket.emit("error", { message: "Invalid message data" });
+    }
+    if (!mongoose.Types.ObjectId.isValid(receiverId)) {
+      io.to(senderId).emit("error",{ success: false, message: "Invalid receiver ID" });
+    }
 
-      const newMessage = new messageModel({
-        chatId: chat._id,
-        senderId,
-        receiverId,
-        message,
-        file,
-      });
+    let chat = await chatModel.findOne({ participants: { $all: [senderId, receiverId] } });
+    if (!chat) {
+      chat = await new chatModel({ participants: [senderId, receiverId] }).save();
+    }
 
-      await newMessage.save();
+    const newMessage = await new messageModel({
+      chatId: chat._id,
+      senderId,
+      receiverId,
+      message,
+      file,
+    }).save();
 
-      chat.lastMessage = message;
-      chat.updatedAt = new Date();
-      await chat.save();
-      if (receiverId in sockets) {
-        io.to(receiverId).emit("receiveMessage", newMessage);
-      }
+    chat.lastMessage = message || "File sent";
+    chat.updatedAt = new Date();
+    await chat.save();
+
+    if (sockets[receiverId]) {
+      io.to(receiverId).emit("receiveMessage", newMessage);
+    }
+  } catch (error) {
+    console.error("Send Message Error:", error.message);
+    socket.emit("error", { message: "Failed to send message" });
+  }
+};
+
+// **Fetch Chat History**
+const handleChatHistory = async (socket, data) => {
+  try {
+    const { receiverId, page = 1, limit = 2 } = data;
+    const senderId = socket.data.user._id;
+
+    if (!receiverId) return socket.emit("error", {success:false, message: "Receiver ID required" });
+    if (!mongoose.Types.ObjectId.isValid(receiverId)) {
+      return socket.emit("error",{ success: false, message: "Invalid receiver ID" });
+    }
+    const chat = await chatModel.findOne({ participants: { $all: [senderId, receiverId] } });
+    if (!chat) return socket.emit("chatHistory", []);
+
+    const messages = await messageModel
+      .find({ chatId: chat._id })
+      .sort({ created_at: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean();
+      const totalRecords = await messageModel
+      .countDocuments({ chatId: chat._id })
+      const totalPages = Math.ceil(totalRecords / limit)
+      const isMoreData = Number(totalPages) !== Number(page)
+    messages.forEach((msg) => {
+      msg.time = moment(msg.createdAt).format("hh:mm A");
+      msg.date = moment(msg.createdAt).format("DD-MM-YYYY");
+    });
+    console.log("page check and all other",page, totalPages, isMoreData,messages)
+    const response = {
+      isMoreData,
+      messages:messages.reverse()
+    }
+
+    socket.emit("chatHistory", response);
+  } catch (error) {
+    console.error("Chat History Error:", error.message);
+    socket.emit("error", { message: "Failed to fetch chat history" });
+  }
+};
+
+// **Fetch Chat List**
+const handleChatList = async (socket) => {
+  try {
+    const senderId = socket.data.user._id;
+    const chatList = await chatModel.aggregate([
+      { $match: { participants: { $in: [new mongoose.Types.ObjectId(senderId)] } } },
+      {
+        $lookup: {
+          from: "users",
+          localField: "participants",
+          foreignField: "_id",
+          as: "userDetails",
+        },
+      },
+      { $unwind: "$userDetails" },
+      {
+        $project: {
+          lastMessage: 1,
+          messageAt: 1,
+          _id: "$userDetails._id",
+          firstName: "$userDetails.firstName",
+          lastName: "$userDetails.lastName",
+          profileImage: "$userDetails.profileImage",
+          emailId: "$userDetails.emailId",
+        },
+      },
+      { $match: { _id: { $ne: new mongoose.Types.ObjectId(senderId) } } },
+      { $sort: { messageAt: -1 } },
+    ]);
+
+    socket.emit("chatList", chatList);
+  } catch (error) {
+    console.error("Chat List Error:", error.message);
+    socket.emit("error", { message: "Failed to fetch chat list" });
+  }
+};
+
+// **Mark Messages as Read**
+const handleMarkMessagesAsRead = async (socket, data) => {
+  try {
+    const { receiverId } = data;
+    const senderId = socket.data.user._id;
+
+    if (!receiverId) return socket.emit("error", { message: "Receiver ID required" });
+
+    const chat = await chatModel.findOne({
+      participants: { $all: [new mongoose.Types.ObjectId(senderId), new mongoose.Types.ObjectId(receiverId)] },
     });
 
-    // **Fetch Chat History**
-    socket.on("chatHistory", async (data) => {
-      const { receiverId } = data;
-      const senderId = socket.data.user._id;
-
-      let chat = await chatModel.findOne({
-        participants: { $all: [senderId, receiverId] },
-      });
-
-      if (!chat) {
-        socket.emit("chatHistory", []);
-        return;
-      }
-      let { page, limit } = data;
-      console.log("aggregate===>>>", page, limit);
-
-      page = Number(page) || 1;
-      limit = Number(limit) || 10;
-      const skip = (page - 1) * limit;
-
-      const messages = await messageModel.aggregate([
-        { $match: { chatId: chat._id } },
-        { $sort: { created_at: 1 } },
-        // { $skip: skip },
-        // { $limit: limit },
-        {
-          $project: {
-            _id: 1,
-            senderId: 1,
-            message: 1,
-            isRead: 1,
-            file: 1,
-            date: {
-              $dateToString: {
-                format: "%d-%m-%Y",
-                date: "$created_at",
-                timezone: "Asia/Kolkata",
-              },
-            }, // Formats date in IST
-            time: {
-              $dateToString: {
-                format: "%H:%M",
-                date: "$created_at",
-                timezone: "Asia/Kolkata",
-              },
-            }, // Stores time in 24-hour format
-          },
-        },
-      ]);
-      console.log("messages===>>>", messages);
-      // Convert 24-hour time to 12-hour format in JavaScript
-      const formattedMessages = messages.map((msg) => ({
-        ...msg,
-        time: moment(msg.time, "HH:mm").format("hh:mm A"), // Convert 24-hour format to 12-hour AM/PM
-      }));
-
-      // Group messages by date
-      const groupedMessages = formattedMessages.reduce((acc, msg) => {
-        if (!acc[msg.date]) acc[msg.date] = [];
-        acc[msg.date].push({
-          _id: msg._id,
-          isRead: msg.isRead,
-          senderId: msg.senderId,
-          message: msg.message,
-          file: msg.file,
-          time: msg.time, // Now in 12-hour format
-        });
-        return acc;
-      }, {});
-
-      // Convert to array format
-      const chatHistory = Object.entries(groupedMessages).map(
-        ([date, messages]) => ({ date, messages })
-      );
-
-      socket.emit("chatHistory", messages);
-    });
-    // **Chat List**
-    socket.on("chatList", async () => {
-      const senderId = socket.data.user._id;
-      const chatList = await chatModel.aggregate([
-        {
-          $match: {
-            participants: { $in: [new mongoose.Types.ObjectId(senderId)] },
-          },
-        },
-        {
-          $lookup: {
-            from: "users", // Join with the "users" collection
-            localField: "participants", // Match participants field in ChatMessage
-            foreignField: "_id", // Match with _id field of the User model
-            as: "userDetails", // Add user details to the chat
-          },
-        },
-        {
-          $unwind: "$userDetails", // Flatten the userDetails array (since there can be multiple users)
-        },
-        {
-          $project: {
-            lastMessage: 1,
-            messageAt: 1,
-            // participants: 1,
-            _id: "$userDetails._id",
-            firstName: "$userDetails.firstName",
-            lastName: "$userDetails.lastName",
-            profileImage: "$userDetails.profileImage",
-            emailId: "$userDetails.emailId",
-          },
-        },
-        {
-          $match: {
-            // Ensure that the logged-in user is not included in the participants list in the response
-            _id: { $ne: new mongoose.Types.ObjectId(senderId) },
-          },
-        },
-        {
-          $sort: { messageAt: -1 }, // Sort by latest message
-        },
-      ]);
-      socket.emit("chatList", chatList);
-    });
-
-    // **Mark Messages as Read**
-    socket.on("markMessagesAsRead", async (data) => {
-      const { receiverId } = data;
-      const senderId = socket.data.user._id;
-    
-      let chat = await chatModel.findOne({
-        participants: { $all: [new mongoose.Types.ObjectId(senderId), new mongoose.Types.ObjectId(receiverId)] },
-      });
-      console.log("handle check idd",chat)
-      if(chat){
-      await messageModel.updateMany(
-        { chatId:new mongoose.Types.ObjectId(chat._id),isRead:false },
-        { $set: { isRead: true } }
-      );
+    if (chat) {
+      await messageModel.updateMany({ chatId: chat._id, isRead: false }, { $set: { isRead: true } });
       socket.emit("markMessagesAsReads", { success: true });
     }
-    });
+  } catch (error) {
+    console.error("Mark Messages as Read Error:", error.message);
+    socket.emit("error", { message: "Failed to mark messages as read" });
+  }
+};
 
-    // **Handle Disconnection**
-    socket.on("disconnect", () => {
+// **Handle Disconnection**
+const handleDisconnect = (socket) => {
+  try {
+    const userId = socket.data.user?._id?.toString();
+    if (userId) {
       delete sockets[userId];
-      onlineUsers.splice(onlineUsers.indexOf(userId), 1);
+      onlineUsers.delete(userId);
       console.log(`${socket.data.user.firstName} disconnected`);
-    });
-  });
+    }
+  } catch (error) {
+    console.error("Disconnection Error:", error.message);
+  }
 };
