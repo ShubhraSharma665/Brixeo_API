@@ -70,20 +70,25 @@ const handleSendMessage = async (socket, data, io) => {
       chat = await new chatModel({ participants: [senderId, receiverId] }).save();
     }
 
-    const newMessage = await new messageModel({
+    let newMessage = await new messageModel({
       chatId: chat._id,
       senderId,
       receiverId,
       message,
       file,
     }).save();
-
+    
     chat.lastMessage = message || "File sent";
     chat.updatedAt = new Date();
     await chat.save();
+    const formattedMessage = {
+      ...newMessage.toObject(),
+      time: moment(newMessage.created_at).format("hh:mm A"), // Fix field name
+      date: moment(newMessage.created_at).format("DD-MM-YYYY"),
+    };
 
     if (sockets[receiverId]) {
-      io.to(receiverId).emit("receiveMessage", newMessage);
+      io.to(receiverId).emit("receiveMessage", formattedMessage);
     }
   } catch (error) {
     console.error("Send Message Error:", error.message);
@@ -94,7 +99,7 @@ const handleSendMessage = async (socket, data, io) => {
 // **Fetch Chat History**
 const handleChatHistory = async (socket, data) => {
   try {
-    const { receiverId, page = 1, limit = 2 } = data;
+    const { receiverId, page = 1, limit = 20, skip } = data;
     const senderId = socket.data.user._id;
 
     if (!receiverId) return socket.emit("error", {success:false, message: "Receiver ID required" });
@@ -107,7 +112,7 @@ const handleChatHistory = async (socket, data) => {
     const messages = await messageModel
       .find({ chatId: chat._id })
       .sort({ created_at: -1 })
-      .skip((page - 1) * limit)
+      .skip(skip)
       .limit(limit)
       .lean();
       const totalRecords = await messageModel
@@ -115,10 +120,10 @@ const handleChatHistory = async (socket, data) => {
       const totalPages = Math.ceil(totalRecords / limit)
       const isMoreData = Number(totalPages) !== Number(page)
     messages.forEach((msg) => {
-      msg.time = moment(msg.createdAt).format("hh:mm A");
-      msg.date = moment(msg.createdAt).format("DD-MM-YYYY");
+      msg.time = moment(msg.created_at).format("hh:mm A");
+      msg.date = moment(msg.created_at).format("DD-MM-YYYY");
     });
-    console.log("page check and all other",page, totalPages, isMoreData,messages)
+    
     const response = {
       isMoreData,
       messages:messages.reverse()
