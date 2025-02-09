@@ -83,7 +83,7 @@ const handleSendMessage = async (socket, data, io) => {
     await chat.save();
     const formattedMessage = {
       ...newMessage.toObject(),
-      time: moment(newMessage.created_at).format("hh:mm A"), // Fix field name
+      time: moment(newMessage.created_at).format("hh:mm A"),
       date: moment(newMessage.created_at).format("DD-MM-YYYY"),
     };
 
@@ -99,7 +99,7 @@ const handleSendMessage = async (socket, data, io) => {
 // **Fetch Chat History**
 const handleChatHistory = async (socket, data) => {
   try {
-    const { receiverId, page = 1, limit = 20, skip } = data;
+    const { receiverId, page = 1, limit = 2, skip } = data;
     const senderId = socket.data.user._id;
 
     if (!receiverId) return socket.emit("error", {success:false, message: "Receiver ID required" });
@@ -117,8 +117,7 @@ const handleChatHistory = async (socket, data) => {
       .lean();
       const totalRecords = await messageModel
       .countDocuments({ chatId: chat._id })
-      const totalPages = Math.ceil(totalRecords / limit)
-      const isMoreData = Number(totalPages) !== Number(page)
+      const isMoreData = !totalRecords? false: Number(skip) + limit >= Number(totalRecords) ? false :Number(totalRecords) !== Number(skip) + limit
     messages.forEach((msg) => {
       msg.time = moment(msg.created_at).format("hh:mm A");
       msg.date = moment(msg.created_at).format("DD-MM-YYYY");
@@ -128,6 +127,7 @@ const handleChatHistory = async (socket, data) => {
       isMoreData,
       messages:messages.reverse()
     }
+    console.log("isMoreData===>>>",isMoreData)
 
     socket.emit("chatHistory", response);
   } catch (error) {

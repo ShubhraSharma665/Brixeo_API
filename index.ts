@@ -14,7 +14,7 @@ const server = http.createServer(app);
 
 const io = new SocketServer(server, {
   cors: {
-    origin: ["https://brixeopro.com", "https://brixeopro.com/chats"],
+    origin: ["https://brixeopro.com", "http://localhost:3000"],
     methods: ["GET", "POST"],
     credentials: true,
   },
