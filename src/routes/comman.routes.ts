@@ -16,7 +16,8 @@ class CommonRoutes {
 		this.router.post('/forgot-password', CommanController.forgotPassword);
 		this.router.post('/newsletter/add-email', CommanController.newsLetterAdd);
 		this.router.post('/newsletter/update', CommanController.newsLetterUpdate);
-		this.router.post('/newsletter/change-status', CommanController.newsLetterStatusChange);		
+		this.router.post('/newsletter/change-status', CommanController.newsLetterStatusChange);	
+		this.router.post('/notification/fcm/save', CommanController.saveFCMToken);		
 	}
 
 	public get() {

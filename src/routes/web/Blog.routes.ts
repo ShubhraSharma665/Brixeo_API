@@ -18,11 +18,13 @@ class BlogRoutes {
   public post() {}
 
   public get() {
-    this.router.get("/get", Authentication.admin, BlogController.getBlogsList);
-    this.router.get("/get/latest", Authentication.admin, BlogController.getLatestBlogs);
+    this.router.get("/get", BlogController.getBlogsList);
     this.router.get(
-      '/get-by-id/:_id',
-      Authentication.admin,
+      "/get/latest",
+      BlogController.getLatestBlogs
+    );
+    this.router.get(
+      "/get-by-id/:_id",
       BlogController.getBlogsById
     );
   }

@@ -4,6 +4,8 @@ import userModels from "../../models/user.models";
 import Auth from "../../utils/Auth";
 import moment from "moment";
 import mongoose from "mongoose";
+import admin from "../firebase";
+import firebaseModel from "../../models/firebase.model";
 
 const sockets = {};
 const onlineUsers = new Set();
@@ -86,7 +88,26 @@ const handleSendMessage = async (socket, data, io) => {
       time: moment(newMessage.created_at).format("hh:mm A"),
       date: moment(newMessage.created_at).format("DD-MM-YYYY"),
     };
+    if (receiverId && !onlineUsers.has(receiverId)) {
+      // Send push notification
+      
+      const getFCMToken:any = firebaseModel.find({userId:new mongoose.Types.ObjectId(receiverId)}) 
+      const messagePayload = {
+        notification: {
+          title: "New Message",
+          body: `You have a new message from ${senderId}`,
+          click_action: "https://brixeopro.com/chat",
+        },
+        token: getFCMToken?.fcmToken,
+      };
 
+      try {
+        await admin.messaging().send(messagePayload);
+        console.log("Notification sent!");
+      } catch (error) {
+        console.error("Error sending notification:", error);
+      }
+    }
     if (sockets[receiverId]) {
       io.to(receiverId).emit("receiveMessage", formattedMessage);
     }

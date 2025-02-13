@@ -2,6 +2,7 @@ import userModels from "../models/user.models";
 import _RS from "../helpers/ResponseHelper";
 import newsletterModel from "../models/newsletter.model";
 import mongoose from "mongoose";
+import firebaseModel from "../models/firebase.model";
 const express = require("express");
 
 const cookieParser = require("cookie-parser");
@@ -121,6 +122,7 @@ export class CommanController {
   }
 
 
+
   static async newsLetterGet(req, res, next) {
     const startTime = new Date().getTime();
     let { page, limit, search } = req.query;
@@ -186,6 +188,37 @@ export class CommanController {
         {},
         startTime
       );
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async saveFCMToken(req, res, next) {
+    const startTime = new Date().getTime();
+    const { receiverId, fcmToken } = req.body
+    try {
+      let isExist = await firebaseModel.findOne({ fcmToken: fcmToken });
+      if(isExist){
+        return _RS.ok(
+          res,
+          "SUCCESS",
+          "FCM token already saved!!",
+          {},
+          startTime
+        );
+      }
+      await new firebaseModel({
+        userId:receiverId,
+        fcmToken:fcmToken
+      }).save()
+      return _RS.ok(
+        res,
+        "SUCCESS",
+        "FCM token saved successfully!!",
+        {},
+        startTime
+      );
+      
     } catch (err) {
       next(err);
     }

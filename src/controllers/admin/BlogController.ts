@@ -9,7 +9,7 @@ app.use(cookieParser());
 export class BlogController {
   static async AddBlogs(req, res, next) {
     const startTime = new Date().getTime();
-    const { authorName, blogTitle, blogContent, tagsList, description } = req.body;
+    const { authorName, blogTitle, blogContent, tagsList, description, category } = req.body;
     const { id } = req.user;
     try {
       const data = {
@@ -17,6 +17,7 @@ export class BlogController {
         authorName,
         blogTitle,
         blogContent,
+        category,
         tagsList:JSON.parse(tagsList),
         image: req?.files?.image[0].originalname,
         description:description
@@ -30,7 +31,7 @@ export class BlogController {
 
   static async UpdateBlogs(req, res, next) {
     const startTime = new Date().getTime();
-    const { authorName, blogTitle, blogContent, tagsList, _id, description } = req.body;
+    const { authorName, blogTitle, blogContent, tagsList, _id, description, category } = req.body;
     try {
       let isBlogExist = await blogsModel.findOne({
         _id: _id,
@@ -59,6 +60,7 @@ export class BlogController {
         (isBlogExist.tagsList = JSON.parse(tagsList) ? JSON.parse(tagsList) : isBlogExist.tagsList),
         (isBlogExist.blogTitle = blogTitle ? blogTitle : isBlogExist.blogTitle);
         (isBlogExist.description = description ? description : isBlogExist.description);
+        (isBlogExist.category = category ? category : isBlogExist.category);
       await isBlogExist.save();
       return _RS.ok(
         res,
@@ -102,8 +104,10 @@ export class BlogController {
             $match: matchStage, // Filtering blogs
           },
         ])
+        .sort({created_at:-1})
         .skip(offset)
-        .limit(parseInt(limit));
+        .limit(parseInt(limit))
+        
 
         const totalCount = await blogsModel.countDocuments(matchStage);
   

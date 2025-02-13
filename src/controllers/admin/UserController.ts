@@ -242,7 +242,7 @@ export class UserController {
   }
   static async addSubUser(req, res, next) {
     const startTime = new Date().getTime();
-    const { firstName, lastName, email, password, permissions } = req.body;
+    const { firstName, lastName, email, password, permissions, title } = req.body;
     const { id, type } = req.user;
     try {
       let users = await userModels.findOne({ emailId: email.toLowerCase() });
@@ -263,7 +263,8 @@ export class UserController {
         emailId: email.toLowerCase(),
         password: userpassword,
         parentId: id,
-        isShow:false
+        isShow:false,
+        title:title
       };
       if (type === USER_TYPE.admin) {
         (user.permissions = permissions), (user.type = USER_TYPE.subAdmin);
@@ -288,6 +289,49 @@ export class UserController {
 
       await userModels.create(user);
       return _RS.ok(res, "SUCCESS", "User saved successfully!!", {}, startTime);
+    } catch (err) {
+      next(err);
+    }
+  }
+  static async updateSubUser(req, res, next) {
+    const startTime = new Date().getTime();
+    const { firstName, lastName, email, password, permissions, title } = req.body;
+    const { id, type } = req.user;
+    try {
+      let users = await userModels.findOne({ emailId: email.toLowerCase() });
+      const userpassword = password?await Auth.encryptPassword(password):users.password;
+      // const user: any = {
+        users.firstName = firstName || users.firstName,
+        users.lastName = lastName || users.lastName ,
+        users.emailId = email.toLowerCase() || users.email.toLowerCase() ,
+        users.password = userpassword,
+        users.parentId = id || users.parentId,
+        users.isShow =false,
+        users.title =title || users.title
+      // };
+      if (type === USER_TYPE.admin) {
+        (users.permissions = permissions), (users.type = USER_TYPE.subAdmin);
+      } else {
+        if (type === USER_TYPE.contractor) {
+          users.type = USER_TYPE.subContractor;
+        }
+        if (type === USER_TYPE.viewingAgent) {
+          users.type = USER_TYPE.subViewingAgent;
+        }
+        users.permissions = [
+          { key: "Dashboard", view: true, add: true, edit: true },
+          { key: "Profile", view: true, add: true, edit: true },
+          { key: "Users", view: true, add: true, edit: true },
+          { key: "Category", view: false, add: false, edit: false },
+          { key: "Newsletters", view: false, add: false, edit: false },
+          { key: "Blogs", view: false, add: false, edit: false },
+          { key: "Chats", view: false, add: false, edit: false },
+          { key: "Change Password", view: true, add: true, edit: true },
+        ];
+      }
+
+      await users.save();
+      return _RS.ok(res, "SUCCESS", "User updated successfully!!", {}, startTime);
     } catch (err) {
       next(err);
     }
