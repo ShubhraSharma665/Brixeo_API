@@ -59,6 +59,10 @@ const User = new Schema(
       type:Boolean,
       default:true
     },
+    isBrixeoVerified:{
+      type:Boolean,
+      default:false
+    },
     primaryAddress: {
       type: String,
       default: null,

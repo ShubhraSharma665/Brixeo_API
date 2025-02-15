@@ -338,14 +338,17 @@ export class UserController {
   }
   static async activeUnactive(req, res, next) {
     const startTime = new Date().getTime();
-    const { id, showActive } = req.body;
-
+    const { id, type } = req.body;
     try {
       let user = await userModels.findOne({ _id: id });
-      if(showActive){
-        user.isAvailable = !user.isAvailable;
-      }else{
+      if(type === "verified"){
+        user.isBrixeoVerified = !user.isBrixeoVerified;
+      }
+      if(type === "active"){
         user.isActive = !user.isActive;
+      }
+      if(type === "available"){
+        user.isAvailable = !user.isAvailable;
       }
       await user.save();
       return _RS.ok(

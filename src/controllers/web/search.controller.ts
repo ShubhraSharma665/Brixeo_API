@@ -4,6 +4,7 @@ import mongoose from "mongoose";
 import { USER_TYPE } from "../../constants";
 import _RS from "../../helpers/ResponseHelper";
 import userModels from "../../models/user.models";
+import categoryModel from "../../models/category.model";
 
 const cookieParser = require("cookie-parser");
 
@@ -14,26 +15,28 @@ export class SearchController {
   static async getSearchResults(req, res, next) {
     const startTime = new Date().getTime();
     try {
-      const { categoryIds, location, rateSort, min,max, search } = req.body;
-      const { page, limit=2  } = req.query
-      console.log("categryIDS", page,limit);
+      const { categoryIds, location, rateSort, min, max, search, verified } =
+        req.body;
+      const { page, limit = 2 } = req.query;
+      const isVerified = verified === "yes" ? true : false;
       const objectIdCategoryIds =
         categoryIds?.length > 0
           ? categoryIds.map((id) => new mongoose.Types.ObjectId(id))
           : [];
 
-          const matchStage: any = {
-            $and: [
-              { type: { $ne: USER_TYPE.admin } }, // Exclude 'admin'
-              {
-                $or: [
-                  { type: USER_TYPE.viewingAgent },
-                  { type: USER_TYPE.contractor },
-                ],
-              },
-              { isShow: true }
+      const matchStage: any = {
+        $and: [
+          { type: { $ne: USER_TYPE.admin } }, // Exclude 'admin'
+          {
+            $or: [
+              { type: USER_TYPE.viewingAgent },
+              { type: USER_TYPE.contractor },
             ],
-          };
+          },
+          { isShow: true },
+          
+        ],
+      };
 
       if (categoryIds?.length > 0) {
         matchStage.categories = { $in: objectIdCategoryIds };
@@ -52,7 +55,11 @@ export class SearchController {
           { rate: { $lte: Number(max) } }
         );
       }
+      if (verified !== undefined) {
+        matchStage.$and.push({ isBrixeoVerified: isVerified });
+      }
     
+
       const pipeline: any[] = [
         {
           $match: matchStage,
@@ -70,7 +77,7 @@ export class SearchController {
             firstName: 1,
             rate: 1,
             title: 1,
-            type:1,
+            type: 1,
             projectImages: 1,
             categories: "$categoryDetails.name",
           },
@@ -82,7 +89,7 @@ export class SearchController {
           $match: {
             $or: [
               { title: { $regex: new RegExp(search, "i") } }, // Match in `title` field
-              { "categories": { $regex: new RegExp(search, "i") } }, // Match in category names
+              { categories: { $regex: new RegExp(search, "i") } }, // Match in category names
             ],
           },
         });
@@ -109,7 +116,7 @@ export class SearchController {
 
       const results = searchResults[0]?.results || [];
       const totalRecords = searchResults[0]?.totalRecords?.[0]?.count || 0;
-  
+
       return _RS.ok(
         res,
         "SUCCESS",
@@ -130,46 +137,103 @@ export class SearchController {
   static async searchLandingResults(req, res, next) {
     const startTime = new Date().getTime();
     try {
+      const parentCategoryNames = [
+        "Property Management Services",
+        "Real Estate Agent and Brokerage Services",
+      ];
+
+      const categories = await categoryModel.aggregate([
+        { $match: { name: { $in: parentCategoryNames } } },
+        {
+          $lookup: {
+            from: "categories",
+            let: { parentId: "$_id" },
+            pipeline: [
+              { $match: { $expr: { $eq: ["$parentId", "$$parentId"] } } },
+            ],
+            as: "childCategories",
+          },
+        },
+      ]);
+
+      const propertyManagementChildIds = [];
+      const realEstateAgentChildIds = [];
+
+      categories.forEach((category) => {
+        if (category.name === "Property Management Services") {
+          propertyManagementChildIds.push(
+            ...category.childCategories.map(
+              (c) => new mongoose.Types.ObjectId(c._id)
+            )
+          );
+        }
+        if (category.name === "Real Estate Agent and Brokerage Services") {
+          realEstateAgentChildIds.push(
+            ...category.childCategories.map(
+              (c) => new mongoose.Types.ObjectId(c._id)
+            )
+          );
+        }
+      });
+
       const result = await userModels.aggregate([
         {
           $facet: {
             contractors: [
-              { $match: { type: USER_TYPE.contractor } }, // Filter for contractors
-              // {
-              //   $lookup: {
-              //     from: "categories", // The name of the categories collection
-              //     localField: "categories", // The field in the user model
-              //     foreignField: "_id", // The field in the categories collection
-              //     as: "categoryDetails", // Populated categories
-              //   },
-              // },
+              { $match: { type: USER_TYPE.contractor, isShow: true } },
               {
                 $project: {
                   _id: 1,
                   title: 1,
                   rate: 1,
                   projectImages: 1,
-                  // categories: "$categoryDetails.name",
+                  isBrixeoVerified: 1,
                 },
               },
             ],
             viewingAgents: [
-              { $match: { type: USER_TYPE.viewingAgent } }, // Filter for viewing agents
-              // {
-              //   $lookup: {
-              //     from: "categories",
-              //     localField: "categories",
-              //     foreignField: "_id",
-              //     as: "categoryDetails",
-              //   },
-              // },
+              { $match: { type: USER_TYPE.viewingAgent, isShow: true } },
               {
                 $project: {
                   _id: 1,
                   title: 1,
                   rate: 1,
                   projectImages: 1,
-                  // categories: "$categoryDetails.name",
+                  isBrixeoVerified: 1,
+                },
+              },
+            ],
+            propertyManagementProfiles: [
+              {
+                $match: {
+                  categories: { $in: propertyManagementChildIds },
+                  isShow: true,
+                },
+              },
+              {
+                $project: {
+                  _id: 1,
+                  title: 1,
+                  rate: 1,
+                  projectImages: 1,
+                  isBrixeoVerified: 1,
+                },
+              },
+            ],
+            realEstateAgentProfiles: [
+              {
+                $match: {
+                  categories: { $in: realEstateAgentChildIds },
+                  isShow: true,
+                },
+              },
+              {
+                $project: {
+                  _id: 1,
+                  title: 1,
+                  rate: 1,
+                  projectImages: 1,
+                  isBrixeoVerified: 1,
                 },
               },
             ],
@@ -212,11 +276,11 @@ export class SearchController {
             lastName: 1,
             // primaryAddress: 1,
             // secondaryAddress: 1,
-            cities:1,
-            state:1,
+            cities: 1,
+            state: 1,
             aboutMe: 1,
-            title:1,
-            actualRate:1,
+            title: 1,
+            actualRate: 1,
             myServices: 1,
             profileImage: 1,
             rate: 1,

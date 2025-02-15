@@ -90,16 +90,21 @@ const handleSendMessage = async (socket, data, io) => {
     };
     if (receiverId && !onlineUsers.has(receiverId)) {
       // Send push notification
+
+      const getFCMToken:any = await firebaseModel.findOne({userId:new mongoose.Types.ObjectId(receiverId)}) 
       
-      const getFCMToken:any = firebaseModel.find({userId:new mongoose.Types.ObjectId(receiverId)}) 
       const messagePayload = {
         notification: {
           title: "New Message",
           body: `You have a new message from ${senderId}`,
-          click_action: "https://brixeopro.com/chat",
         },
-        token: getFCMToken?.fcmToken,
+        data: {
+          click_action: "FLUTTER_NOTIFICATION_CLICK", // Required for web push
+          url: "http://localhost:3000/chats", // Custom data field for handling redirection
+        },
+        token: getFCMToken.fcmToken, // Ensure this is a valid string token
       };
+      console.log("check for fcm token for firebase",receiverId, onlineUsers, getFCMToken)
 
       try {
         await admin.messaging().send(messagePayload);
@@ -120,7 +125,7 @@ const handleSendMessage = async (socket, data, io) => {
 // **Fetch Chat History**
 const handleChatHistory = async (socket, data) => {
   try {
-    const { receiverId, page = 1, limit = 2, skip } = data;
+    const { receiverId, page = 1, limit = 20, skip } = data;
     const senderId = socket.data.user._id;
 
     if (!receiverId) return socket.emit("error", {success:false, message: "Receiver ID required" });
