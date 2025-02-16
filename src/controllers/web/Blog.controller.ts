@@ -75,7 +75,7 @@ export class BlogController {
     try {
       const latestRecords = await blogsModel
         .find()
-        .sort({ createdAt: -1 })
+        .sort({ created_at: -1 })
         .limit(4);
       return _RS.ok(
         res,

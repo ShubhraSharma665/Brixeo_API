@@ -34,7 +34,6 @@ export class SearchController {
             ],
           },
           { isShow: true },
-          
         ],
       };
 
@@ -58,7 +57,6 @@ export class SearchController {
       if (verified !== undefined) {
         matchStage.$and.push({ isBrixeoVerified: isVerified });
       }
-    
 
       const pipeline: any[] = [
         {
@@ -79,6 +77,7 @@ export class SearchController {
             title: 1,
             type: 1,
             projectImages: 1,
+            isBrixeoVerified:1,
             categories: "$categoryDetails.name",
           },
         },
@@ -286,17 +285,49 @@ export class SearchController {
             rate: 1,
             projectImages: 1,
             images: 1,
-            categories: "$categoryDetails.name", // Include category names from the categoryDetails array
+            categories: "$categoryDetails.name",
+            categoriesIDS: "$categoryDetails._id", // Include category names from the categoryDetails array
           },
         },
         { $sort: { rate: 1 } },
+      ]);
+
+      const relatedUsers = await userModels.aggregate([
+        {
+          $match: {
+            _id: { $ne: userId }, // Exclude the current user
+            type: { $ne: USER_TYPE.admin },
+            categories: { $in: searchResults[0].categoriesIDS }, // At least one matching category
+          },
+        },
+        {
+          $lookup: {
+            from: "categories",
+            localField: "categories",
+            foreignField: "_id",
+            as: "categoryDetails",
+          },
+        },
+        {
+          $project: {
+            firstName: 1,
+            rate: 1,
+            title: 1,
+            type: 1,
+            projectImages: 1,
+            lastName: 1,
+            categories: "$categoryDetails.name",
+          },
+        },
+        { $sort: { rate: 1 } }, // Sort by rate if needed
+        { $limit: 4 }, // Get only 4 users
       ]);
 
       return _RS.ok(
         res,
         "SUCCESS",
         "Data found successfully",
-        searchResults,
+        { searchResults, relatedUsers },
         startTime
       );
     } catch (err) {
