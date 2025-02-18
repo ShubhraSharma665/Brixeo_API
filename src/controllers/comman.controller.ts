@@ -2,7 +2,6 @@ import userModels from "../models/user.models";
 import _RS from "../helpers/ResponseHelper";
 import newsletterModel from "../models/newsletter.model";
 import mongoose from "mongoose";
-import firebaseModel from "../models/firebase.model";
 const express = require("express");
 
 const cookieParser = require("cookie-parser");
@@ -48,7 +47,7 @@ export class CommanController {
     const startTime = new Date().getTime();
     const { emailId } = req.body
     try {
-      let isExist = await newsletterModel.findOne({ emailId: emailId.toLowerCase() });
+      let isExist = await newsletterModel.findOne({ emailId: emailId });
       if(isExist){
         return _RS.badRequest(
           res,
@@ -76,7 +75,7 @@ export class CommanController {
     const startTime = new Date().getTime();
     const { _id, emailId } = req.body
     try {
-      let isExist = await newsletterModel.findOne({ emailId: emailId.toLowerCase() });
+      let isExist = await newsletterModel.findOne({ emailId: emailId });
       if(isExist){
         return _RS.badRequest(
           res,
@@ -87,7 +86,7 @@ export class CommanController {
         );
       }
       const newId = new mongoose.Types.ObjectId(_id)
-      await newsletterModel.updateOne({_id:newId},{$set:{emailId:emailId.toLowerCase()}})
+      await newsletterModel.updateOne({_id:newId},{$set:{emailId:emailId}})
       
       return _RS.ok(
         res,
@@ -120,7 +119,6 @@ export class CommanController {
       next(err);
     }
   }
-
 
 
   static async newsLetterGet(req, res, next) {
@@ -171,7 +169,7 @@ export class CommanController {
     const startTime = new Date().getTime();
     const { emailId } = req.body
     try {
-      let isUserExist = await userModels.findOne({ emailId: emailId.toLowerCase() });
+      let isUserExist = await userModels.findOne({ emailId: emailId });
       if(!isUserExist){
         return _RS.badRequest(
           res,
@@ -188,37 +186,6 @@ export class CommanController {
         {},
         startTime
       );
-    } catch (err) {
-      next(err);
-    }
-  }
-
-  static async saveFCMToken(req, res, next) {
-    const startTime = new Date().getTime();
-    const { receiverId, fcmToken } = req.body
-    try {
-      let isExist = await firebaseModel.findOne({ fcmToken: fcmToken });
-      if(isExist){
-        return _RS.ok(
-          res,
-          "SUCCESS",
-          "FCM token already saved!!",
-          {},
-          startTime
-        );
-      }
-      await new firebaseModel({
-        userId:receiverId,
-        fcmToken:fcmToken
-      }).save()
-      return _RS.ok(
-        res,
-        "SUCCESS",
-        "FCM token saved successfully!!",
-        {},
-        startTime
-      );
-      
     } catch (err) {
       next(err);
     }

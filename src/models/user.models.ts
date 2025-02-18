@@ -51,18 +51,6 @@ const User = new Schema(
       type: String,
       default: null,
     },
-    isShow:{
-      type:Boolean,
-      default:false
-    },
-    isAvailable:{
-      type:Boolean,
-      default:true
-    },
-    isBrixeoVerified:{
-      type:Boolean,
-      default:false
-    },
     primaryAddress: {
       type: String,
       default: null,
@@ -204,4 +192,4 @@ const User = new Schema(
 
 mongoose.plugin(aggregatePaginate);
 
-export default model<any, AggregatePaginateModel<any>>("users", User);
+export default model<any, AggregatePaginateModel<any>>("User", User);

@@ -21,119 +21,15 @@ export class UserController {
       const orTypeCondition = [];
       const matchStage: any = {};
       if (type === USER_TYPE.contractor) {
+        // If the user type is contractor
         matchStage.$or = [
           {
             $and: [
               { type: { $ne: "admin" } },
-              { type: USER_TYPE.contractor },
+              { type: USER_TYPE.contractor }, // Get the contractor profile
               { _id: newId },
             ],
           },
-          // {
-          //   $and: [
-          //     { type: { $ne: "admin" } },
-          //     { type: USER_TYPE.subContractor }, // Get child profiles with subadmin type
-          //     { parentId: newId }, // Match subadmin's parentId with the contractor's ID
-          //   ],
-          // },
-        ];
-      }
-
-      if (type === USER_TYPE.viewingAgent) {
-        matchStage.$or = [
-          {
-            $and: [
-              { type: { $ne: "admin" } },
-              { type: USER_TYPE.viewingAgent },
-              { _id: newId },
-            ],
-          },
-          // {
-          //   $and: [
-          //     { type: { $ne: "admin" } },
-          //     { type: USER_TYPE.subViewingAgent },
-          //     { parentId: newId },
-          //   ],
-          // },
-        ];
-      }
-      if (type === USER_TYPE.admin) {
-        matchStage.$and = [
-          { type: { $ne: "admin" } },
-          { type: { $ne: USER_TYPE.subAdmin } },
-          { type: { $ne: USER_TYPE.subContractor } },
-          { type: { $ne: USER_TYPE.subViewingAgent } },
-        ];
-      }
-
-      if (type === USER_TYPE.subAdmin) {
-        matchStage.$and = [{ _id: { $ne: newId }}];
-      }
-      if (type === USER_TYPE.subViewingAgent) {
-        matchStage.$or = [{ _id: newId }];
-      }
-      if (type === USER_TYPE.subContractor) {
-        matchStage.$or = [{ _id: newId }];
-      }
-
-      if (search) {
-        orConditions.push(
-          {
-            emailId: { $regex: search, $options: "i" },
-          },
-          { firstName: { $regex: search, $options: "i" } },
-          { lastName: { $regex: search, $options: "i" } }
-        );
-      }
-
-      let offset = (Number(page) - 1) * Number(limit) || 0;
-      // Combine match conditions with $or conditions
-      if (orConditions.length > 0) {
-        matchStage.$or = orConditions;
-      }
-      console.log(offset, req.query);
-
-      const list = await userModels
-        .aggregate([
-          {
-            $match: matchStage,
-          },
-        ])
-        .skip(offset)
-        .limit(parseInt(limit));
-
-      const totalCount = await userModels.countDocuments(matchStage);
-
-      return _RS.ok(
-        res,
-        "SUCCESS",
-        "Users found successfully!!",
-        { list, totalCount: totalCount, page: page },
-        startTime
-      );
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  static async GetSubUsersList(req, res, next) {
-    const startTime = new Date().getTime();
-    let { page, limit, search } = req.query;
-    const { id, type } = req.user;
-    const newId = new mongoose.Types.ObjectId(id);
-    try {
-      const orConditions: any = [];
-      const orTypeCondition = [];
-      const matchStage: any = {};
-      if (type === USER_TYPE.contractor) {
-        matchStage.$or = [
-          // {
-          //   $and: [
-          //     { type: { $ne: "admin" } },
-          //     { type: USER_TYPE.contractor },
-          //     { _id: newId },
-          //   ],
-          // },
           {
             $and: [
               { type: { $ne: "admin" } },
@@ -147,13 +43,13 @@ export class UserController {
       if (type === USER_TYPE.viewingAgent) {
         // If the user type is viewing agents
         matchStage.$or = [
-          // {
-          //   $and: [
-          //     { type: { $ne: "admin" } },
-          //     { type: USER_TYPE.viewingAgent },
-          //     { _id: newId },
-          //   ],
-          // },
+          {
+            $and: [
+              { type: { $ne: "admin" } },
+              { type: USER_TYPE.viewingAgent },
+              { _id: newId },
+            ],
+          },
           {
             $and: [
               { type: { $ne: "admin" } },
@@ -164,22 +60,19 @@ export class UserController {
         ];
       }
       if (type === USER_TYPE.admin) {
-        matchStage.$and = [
-          { type: { $ne: "admin" } },
-          { type: { $ne: USER_TYPE.contractor } },
-          { type: { $ne: USER_TYPE.viewingAgent } },
-        ];
+        matchStage.$and = [{ type: { $ne: "admin" } }];
       }
 
       if (type === USER_TYPE.subAdmin) {
-        matchStage.$and = [{ _id: { $ne: newId } },{ _id: { $eq: newId }}];
+        matchStage.$or = [{ _id: newId }];
       }
       if (type === USER_TYPE.subViewingAgent) {
-        matchStage.$and = [{ _id: newId },{type:"admin"}];
+        matchStage.$or = [{ _id: newId }];
       }
       if (type === USER_TYPE.subContractor) {
-        matchStage.$or = [{ _id: newId },{type:"admin"}];
+        matchStage.$or = [{ _id: newId }];
       }
+
 
       if (search) {
         orConditions.push(
@@ -242,10 +135,10 @@ export class UserController {
   }
   static async addSubUser(req, res, next) {
     const startTime = new Date().getTime();
-    const { firstName, lastName, email, password, permissions, title } = req.body;
+    const { firstName, lastName, email, password, permissions } = req.body;
     const { id, type } = req.user;
     try {
-      let users = await userModels.findOne({ emailId: email.toLowerCase() });
+      let users = await userModels.findOne({ emailId: email });
       console.log("check", users);
       if (users) {
         return _RS.notAcceptable(
@@ -260,14 +153,13 @@ export class UserController {
       const user: any = {
         firstName: firstName,
         lastName: lastName,
-        emailId: email.toLowerCase(),
+        emailId: email,
         password: userpassword,
         parentId: id,
-        isShow:false,
-        title:title
       };
       if (type === USER_TYPE.admin) {
-        (user.permissions = permissions), (user.type = USER_TYPE.subAdmin);
+        user.permissions = permissions,
+        user.type = USER_TYPE.subAdmin
       } else {
         if (type === USER_TYPE.contractor) {
           user.type = USER_TYPE.subContractor;
@@ -282,7 +174,6 @@ export class UserController {
           { key: "Category", view: false, add: false, edit: false },
           { key: "Newsletters", view: false, add: false, edit: false },
           { key: "Blogs", view: false, add: false, edit: false },
-          { key: "Chats", view: false, add: false, edit: false },
           { key: "Change Password", view: true, add: true, edit: true },
         ];
       }
@@ -293,63 +184,13 @@ export class UserController {
       next(err);
     }
   }
-  static async updateSubUser(req, res, next) {
-    const startTime = new Date().getTime();
-    const { firstName, lastName, email, password, permissions, title } = req.body;
-    const { id, type } = req.user;
-    try {
-      let users = await userModels.findOne({ emailId: email.toLowerCase() });
-      const userpassword = password?await Auth.encryptPassword(password):users.password;
-      // const user: any = {
-        users.firstName = firstName || users.firstName,
-        users.lastName = lastName || users.lastName ,
-        users.emailId = email.toLowerCase() || users.email.toLowerCase() ,
-        users.password = userpassword,
-        users.parentId = id || users.parentId,
-        users.isShow =false,
-        users.title =title || users.title
-      // };
-      if (type === USER_TYPE.admin) {
-        (users.permissions = permissions), (users.type = USER_TYPE.subAdmin);
-      } else {
-        if (type === USER_TYPE.contractor) {
-          users.type = USER_TYPE.subContractor;
-        }
-        if (type === USER_TYPE.viewingAgent) {
-          users.type = USER_TYPE.subViewingAgent;
-        }
-        users.permissions = [
-          { key: "Dashboard", view: true, add: true, edit: true },
-          { key: "Profile", view: true, add: true, edit: true },
-          { key: "Users", view: true, add: true, edit: true },
-          { key: "Category", view: false, add: false, edit: false },
-          { key: "Newsletters", view: false, add: false, edit: false },
-          { key: "Blogs", view: false, add: false, edit: false },
-          { key: "Chats", view: false, add: false, edit: false },
-          { key: "Change Password", view: true, add: true, edit: true },
-        ];
-      }
-
-      await users.save();
-      return _RS.ok(res, "SUCCESS", "User updated successfully!!", {}, startTime);
-    } catch (err) {
-      next(err);
-    }
-  }
   static async activeUnactive(req, res, next) {
     const startTime = new Date().getTime();
-    const { id, type } = req.body;
+    const { id } = req.body;
+
     try {
       let user = await userModels.findOne({ _id: id });
-      if(type === "verified"){
-        user.isBrixeoVerified = !user.isBrixeoVerified;
-      }
-      if(type === "active"){
-        user.isActive = !user.isActive;
-      }
-      if(type === "available"){
-        user.isAvailable = !user.isAvailable;
-      }
+      user.isActive = !user.isActive;
       await user.save();
       return _RS.ok(
         res,
@@ -378,7 +219,10 @@ export class UserController {
         rate,
         title,
         bussinessName,
+        // actualRate,
         aboutMe,
+        // myServices,
+        preferredLocation,
         categories,
         licenseName,
         licenseID,
@@ -407,7 +251,8 @@ export class UserController {
       user.licenseName = licenseName || user.licenseName;
       user.state = state || user.state;
       user.cities = JSON.parse(cities) || user.cities;
-      user.isShow = true;
+      // user.preferredLocation =
+      //   JSON.parse(preferredLocation) || user.preferredLocation;
       user.categories = JSON.parse(categories) || user.categories;
       user.profileImage =
         typeof req?.body?.profileImage == "string"

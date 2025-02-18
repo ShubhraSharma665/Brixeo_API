@@ -15,25 +15,26 @@ export class AuthController {
 	static async signUp(req, res, next) {
 		console.log('user stay here', req.body);
 		const startTime = new Date().getTime();
-		const { firstName,lastName,emailId, password, type } = req.body;
+		const { firstName,lastName,emailId, password, type, location } = req.body;
 		try {
 			const getUser = await User.findOne({
-				emailId:emailId.toLowerCase()
+				emailId:emailId
 			});
             const isUserValid = Object.values(USER_TYPE).includes(type)
             if(!isUserValid){
 				return _RS.badRequest(res, "", 'Type is invalid', {}, startTime);
             }
 			if (getUser) {
-				return _RS.badRequest(res, "", 'Email already exist!!', {}, startTime);
+				return _RS.badRequest(res, "", 'User already exist!!', {}, startTime);
 			} else {
 				const userpassword = await Auth.encryptPassword(password);
 				const payload:any = {
 					type: type,
 					password: userpassword,
 					firstName:firstName,
-					emailId:emailId.toLowerCase(),
+					emailId:emailId,
                     lastName:lastName,
+					// location:location,
 				};
 				if(type === USER_TYPE.propertyOwner){
 					payload.permissions = [
@@ -42,9 +43,7 @@ export class AuthController {
 						{ key: "Users", view: false, add: false, edit: false },
 						{ key: "Category", view: false, add: false, edit: false },
 						{ key: "Newsletters", view: false, add: false, edit: false },
-						{ key: "Chats", view: false, add: false, edit: false },
 						{ key: "Blogs", view: false, add: false, edit: false },
-						{ key: "SubUsers", view: false, add: false, edit: false },
 						{ key: "Change Password", view: false, add: false, edit: false },
 					  ]
 				}if(type === USER_TYPE.contractor){
@@ -55,8 +54,6 @@ export class AuthController {
 						{ key: "Category", view: false, add: false, edit: false },
 						{ key: "Newsletters", view: false, add: false, edit: false },
 						{ key: "Blogs", view: false, add: false, edit: false },
-						{ key: "Chats", view: true, add: true, edit: true },
-						{ key: "SubUsers", view: true, add: true, edit: true },
 						{ key: "Change Password", view: true, add: true, edit: true },
 					  ]
 				}
@@ -68,8 +65,6 @@ export class AuthController {
 						{ key: "Category", view: false, add: false, edit: false },
 						{ key: "Newsletters", view: false, add: false, edit: false },
 						{ key: "Blogs", view: false, add: false, edit: false },
-						{ key: "SubUsers", view: true, add: true, edit: true },
-						{ key: "Chats", view: true, add: true, edit: true },
 						{ key: "Change Password", view: true, add: true, edit: true },
 					  ]
 				}
