@@ -73,6 +73,9 @@ export class BlogController {
       next(err);
     }
   }
+  static async uploadEditorImage(){
+    
+  }
   static async getBlogs(req, res, next) {
     const startTime = new Date().getTime();
     let { page, limit, search } = req.query;

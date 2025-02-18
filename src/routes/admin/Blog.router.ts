@@ -37,6 +37,14 @@ class BlogRouter {
             BlogController.UpdateBlogs
           );
           this.router.post(
+            "/upload-editor-image",
+            Authentication.admin,
+            upload.fields([
+              { name: "image", maxCount: 1 },
+            ]),
+            BlogController.uploadEditorImage
+          );
+          this.router.post(
             "/change-status",
             Authentication.admin,
             BlogController._ChangeStatusOfBlogs
